@@ -1,4 +1,4 @@
-#include motor.h
+#include "motor.h"
 
 Motor::Motor(int pin1, int pin2){
   pinA = pin1;
@@ -8,7 +8,7 @@ Motor::Motor(int pin1, int pin2){
   pinMode(pinB, OUTPUT);
 
   digitalWrite(pinA, LOW);
-  digitalWrite()
+  digitalWrite(pinB, LOW);
 
 };
 
@@ -16,7 +16,7 @@ Motor::Motor(int pin1, int pin2){
   Motor *motor: pointer to the motor you want to drive
   int pwm: a value between -255 and 255, where the sign gives direction
 */
-void setSpeed(Motor *motor, int pwm) {
+void Motor::setSpeed(int pwm) {
   if (pwm >= 0) {
     analogWrite(pinA, pwm);
     analogWrite(pinB, 0);

@@ -9,7 +9,7 @@ class Motor {
     int pinA;
     int pinB;
     Motor(int pin1, int pin2);
-    void setSpeed(Motor *motor, int pwm);
+    void setSpeed(int pwm);
 
 };
 

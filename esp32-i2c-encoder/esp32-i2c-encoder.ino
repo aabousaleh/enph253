@@ -13,8 +13,7 @@
 #include "pid.h"
 #include "motor.h"
 
-// #include "motors.ino"
-
+//right motor pwm pins
 #define PWM_RIGHT_1 25
 #define PWM_RIGHT_2 26
 
@@ -26,9 +25,9 @@
 #define I2C_SDA1 19
 #define I2C_SCL1 8
 
-#define GAIN_P 1
-#define GAIN_I 0
-#define GAIN_D 2
+#define GAIN_0P 1
+#define GAIN_0I 0
+#define GAIN_0D 2
 
 AS5600 as5600_0(&Wire);
 AS5600 as5600_1(&Wire1);
@@ -38,7 +37,7 @@ double dt = 0.01; //in s
 unsigned long timeStart = 0;
 unsigned long timeEnd = dt*1000; //convert to ms
 
-Error e1 = {};
+Error e1;
 Motor right(PWM_RIGHT_1, PWM_RIGHT_2);
 
 void setup()
@@ -66,8 +65,6 @@ void setup()
   Serial.print("Connect device 1: ");
   Serial.println(as5600_1.isConnected() ? "true" : "false");
   delay(1000);
-
-  pwm_start();
 }
 
 
