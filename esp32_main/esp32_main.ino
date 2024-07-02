@@ -1,39 +1,15 @@
-//
-//    FILE: AS5600_demo.ino
-//  AUTHOR: Rob Tillaart
-// PURPOSE: demo
-//     URL: https://github.com/RobTillaart/AS5600
-//
-//  Examples may use AS5600 or AS5600L devices.
-//  Check if your sensor matches the one used in the example.
-//  Optionally adjust the code.
-
-
+#include "Arduino.h"
 #include "AS5600.h"
 #include "pid.h"
 #include "motor.h"
+#include "definitions.h"
 
-//right motor pwm pins
-#define PWM_RIGHT_1 26
-#define PWM_RIGHT_2 32
 
-//left motor pwm pins
-#define PWM_LEFT_1 39
-#define PWM_LEFT_2 25
 
-//right encoder i2c
-#define I2C_SDA0 21
-#define I2C_SCL0 22
-
-//left encoder i2c
-#define I2C_SDA1 19
-#define I2C_SCL1 8
-
-#define GAIN_0P 1
-#define GAIN_0I 0
-#define GAIN_0D 2
-
+//initialize i2c bus for right encoder
 AS5600 as5600_0(&Wire);
+
+//initialize i2c bus for left encoder
 AS5600 as5600_1(&Wire1);
 
 double setpoint = 0; //in cm
@@ -54,16 +30,12 @@ void setup()
   
   Serial.begin(115200);
 
-  // pinMode(PWM_RIGHT_1, OUTPUT);
-  // pinMode(PWM_RIGHT_2, OUTPUT);
-
-  // analogWrite(PWM_RIGHT_1, 0);
-  // analogWrite(PWM_RIGHT_2, 0);
-
+  //initialize the i2c busses
   Wire.begin(I2C_SDA0, I2C_SCL0);
   Wire1.begin(I2C_SDA1, I2C_SCL1);
 
-  as5600_0.begin();  //  set direction pin.
+  //initialize right encoder
+  as5600_0.begin();
   as5600_0.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
   Serial.print("Connect device 0: ");
   Serial.println(as5600_0.isConnected() ? "true" : "false");
@@ -91,4 +63,10 @@ void loop()
   
   delay(100);
   //Serial.println(as5600.detectMagnet());
+}
+
+
+void line_sensing() {
+
+
 }
