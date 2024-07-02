@@ -14,8 +14,12 @@
 #include "motor.h"
 
 //right motor pwm pins
-#define PWM_RIGHT_1 25
-#define PWM_RIGHT_2 26
+#define PWM_RIGHT_1 26
+#define PWM_RIGHT_2 32
+
+//left motor pwm pins
+#define PWM_LEFT_1 39
+#define PWM_LEFT_2 25
 
 //right encoder i2c
 #define I2C_SDA0 21
@@ -37,8 +41,13 @@ double dt = 0.01; //in s
 unsigned long timeStart = 0;
 unsigned long timeEnd = dt*1000; //convert to ms
 
-Error e1;
+Error right_encoder;
 Motor right(PWM_RIGHT_1, PWM_RIGHT_2);
+
+Error left_encoder;
+Motor left(PWM_LEFT_1, PWM_LEFT_2);
+
+Error line_sensing;
 
 void setup()
 {
