@@ -31,7 +31,14 @@
 //left station-sensing tcrt
 #define LS_TCRT 7
 
-//cm/s
+// steering constant for corrections in cm/s
 #define STEERING_CONSTANT 0.05
+
+//wheel radius in cm
+#define WHEEL_RADIUS 3.35
+
+#define GAIN_P 1
+#define GAIN_I 0
+#define GAIN_D 0
 
 #endif

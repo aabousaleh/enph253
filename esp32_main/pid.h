@@ -11,7 +11,7 @@ class Error{
     double d;
     double eLog[3];
     Error();
-    Error *updateError(Error *error, double setpoint, double reading, double dt);
+    void updateError(Error *error, double setpoint, double reading, double dt);
 
 };
 #endif

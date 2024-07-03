@@ -19,14 +19,12 @@ unsigned long timeStart = 0;
 unsigned long timeEnd = dt*1000; //convert to ms
 
 volatile double rightSpeedSetpoint = 0; // cm/s
-Error right_encoder;
+Error rightSpeedError;
 Motor right(PWM_RIGHT_1, PWM_RIGHT_2);
 
 volatile double leftSpeedSetpoint = 0;
-Error left_encoder;
+Error leftSpeedError;
 Motor left(PWM_LEFT_1, PWM_LEFT_2);
-
-Error line_sensing;
 
 void setup()
 {
@@ -65,11 +63,18 @@ void loop() {
   // timer.tick();
   //Serial.println(as5600.detectMagnet());
   Serial.println(analogRead(FR_TCRT));
-  delay(50);
+
+  equalSpeedSet(10);
+  line_sensing_method();
+  updateError(&rightSpeedError, rightSpeedSetpoint, 1.0 * as5600_0.readAngle() * WHEEL_RADIUS / 360.0, dt);
+  updateError(&leftSpeedError, leftSpeedSetpoint, 1.0 * as5600_1.readAngle() * WHEEL_RADIUS / 360.0, dt);
+  right.setSpeed(rightSpeedSetpoint + GAIN_P * rightSpeedError.p + GAIN_I * rightSpeedError.i + GAIN_D * rightSpeedError.d);
+  
+  delay(10);
 }
 
 
-void line_sensing_method(int speed) {
+void line_sensing_method() {
   //tape is higher value
   double fr = analogRead(FR_TCRT);
   double fl = analogRead(FL_TCRT);
@@ -92,10 +97,15 @@ void line_sensing_method(int speed) {
 
 }
 
-void move_forward(int speed, double seconds) {
-  right.setSpeed(speed);
-  left.setSpeed(speed);
-  timer.at(seconds / 1000.0, brake);
+void equalSpeedSet(double speed) {
+  rightSpeedSetpoint = speed;
+  leftSpeedSetpoint = speed;
+}
+
+void move() {
+  right.setSpeed(rightSpeedSetpoint);
+  left.setSpeed(leftSpeedSetpoint);
+  //timer.at(seconds / 1000.0, brake);
 }
 
 bool brake(void *) {
