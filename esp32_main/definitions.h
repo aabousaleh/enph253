@@ -26,4 +26,12 @@
 //back left tcrt
 #define BL_TCRT 37
 
+//right station-sensing tcrt
+#define RS_TCRT 5
+//left station-sensing tcrt
+#define LS_TCRT 7
+
+//cm/s
+#define STEERING_CONSTANT 0.05
+
 #endif
