@@ -5,6 +5,7 @@ Map::Map(/*int numStations, String _stations[numStations]*/) {
   location = 0;
   facingDirection = 1;
   drivingDirection = 1;
+  stateIndex = 0;
 };
 
 int Map::getFacingDirection() {
@@ -25,6 +26,10 @@ int Map::getMovingDirection() {
 
 int Map::getLocation() {
   return location;
+};
+
+String Map::getState() {
+  return states[stateIndex];
 };
 
 void Map::flipFacingDirection() {

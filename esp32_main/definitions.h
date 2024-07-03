@@ -16,8 +16,12 @@ const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum
 #define I2C_SCL0 22
 
 //left encoder i2c
-#define I2C_SDA1 19
-#define I2C_SCL1 8
+#define I2C_SDA1 13
+#define I2C_SCL1 15
+
+//testing i2c pins
+//#define I2C_SDA2 19
+//#define I2C_SCL2 8
 
 //front right tcrt
 #define FR_TCRT 35

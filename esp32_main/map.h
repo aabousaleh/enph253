@@ -14,6 +14,7 @@ class Map{
     int getLocation();
     void flipFacingDirection(); //flips facing direction
     void flipDrivingDirection(); //flips driving direction
+    String getState();
 
   protected:
     //String stations[];
@@ -22,6 +23,8 @@ class Map{
     int location;
     void IRAM_ATTR updateLocationRight(); //when right tape sensor detects tape
     void IRAM_ATTR updateLocationLeft(); //when left tape sensor detect tape
+    int stateIndex;
+    String states[4] = {"Speeding", "Adjusting", "Spinning", "Grabbing"};//adjust size as you add states in constructor
 
 };
 #endif

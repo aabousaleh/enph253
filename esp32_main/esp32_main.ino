@@ -19,13 +19,14 @@ double dt = 0.01; //in s
 unsigned long timeStart = 0;
 unsigned long timeEnd = dt*1000; //convert to ms
 
-float lastAngle = 0;
-long lastTime = 0;
+float lastAngle = 0; //for getAngularSpeed
+
+Map m;
 
 volatile double rightSpeedSetpoint = 0; // cm/s
 Error rightSpeedError;
 Error rightPositionError;
-Motor right(PWM_RIGHT_1, PWM_RIGHT_2, 3300);
+Motor right(PWM_RIGHT_1, PWM_RIGHT_2, 3300); //3300 is totally random value that is """"SOMEWHAT"""" close to real. adjust as needed
 
 volatile double leftSpeedSetpoint = 0;
 Error leftSpeedError;
@@ -116,19 +117,23 @@ void line_sensing_correction() {
   double bl = analogRead(BL_TCRT);
 
   int front_correction = (fr - fl);
-  int back_correction = (bl - br);
+  int back_correction = (br - bl);
 
-  //TODO add driving direction check. it flips which variable to use in switch case
-  
-  //if (state.driveDirection == forward) {}
-
-  if (front_correction > 0) {
-    rightSpeedSetpoint -= STEERING_CONSTANT;
+  if (m.getDrivingDirection() == 1) {
+    if (front_correction > 0) {
+      rightSpeedSetpoint -= STEERING_CONSTANT;
+    }
+    else if (front_correction < 0) {
+      leftSpeedSetpoint -= STEERING_CONSTANT;
+    }
+  } else {
+    if (back_correction > 0) {
+      rightSpeedSetpoint -= STEERING_CONSTANT;
+    }
+    else if (back_correction < 0) {
+      leftSpeedSetpoint -= STEERING_CONSTANT;
+    }
   }
-  else if (front_correction < 0) {
-    leftSpeedSetpoint -= STEERING_CONSTANT;
-  }
-
 }
 
 void equalSpeedSet(double speed) {
