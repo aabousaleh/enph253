@@ -4,6 +4,7 @@
 #include "motor.h"
 #include "definitions.h"
 #include "arduino-timer.h"
+#include "map.h"
 
 auto timer = timer_create_default();
 
@@ -69,10 +70,13 @@ void loop() {
     //Serial.println(as5600.detectMagnet());
     //Serial.println(analogRead(FR_TCRT));
     //line_sensing_correction();
-  if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint / 255.0 * 3000, 1.0 * getAngularSpeed(&as5600_0) /* * WHEEL_RADIUS / 360.0 */, dt);
-  if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1) * WHEEL_RADIUS / 360.0, dt);
-  right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
-  left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
+  // if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint / 255.0 * 3000, 1.0 * getAngularSpeed(&as5600_0) /* * WHEEL_RADIUS / 360.0 */, dt);
+  // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1) * WHEEL_RADIUS / 360.0, dt);
+  // right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
+  // left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
+
+  if (as5600_0.detectMagnet()) rightSpeedError.updateError(30.0, as5600_0.readAngle()/4096.0 * 360/* * WHEEL_RADIUS / 360.0 */, dt);
+  right.setSpeed(GAIN_P*rightSpeedError.p + GAIN_D*rightSpeedError.d);
 
   Serial.print("Setpoint: ");
   Serial.println(rightSpeedSetpoint);
@@ -140,4 +144,9 @@ bool brake(void *) {
   right.setSpeed(0); 
   left.setSpeed(0);
   return true;
+}
+
+void turn180(Map *m) {
+  //TODO write this function
+  m->flipFacingDirection();
 }

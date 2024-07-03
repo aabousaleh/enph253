@@ -1,6 +1,8 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
+const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum robot
+
 //right motor pwm pins
 #define PWM_RIGHT_1 26
 #define PWM_RIGHT_2 32
@@ -37,7 +39,7 @@
 //wheel radius in cm
 #define WHEEL_RADIUS 3.35
 
-#define GAIN_P 0.001
+#define GAIN_P 0.275
 #define GAIN_I 0
 #define GAIN_D 0
 
