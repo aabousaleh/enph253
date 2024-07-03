@@ -24,11 +24,13 @@ long lastTime = 0;
 
 volatile double rightSpeedSetpoint = 0; // cm/s
 Error rightSpeedError;
-Motor right(PWM_RIGHT_1, PWM_RIGHT_2);
+Error rightPositionError;
+Motor right(PWM_RIGHT_1, PWM_RIGHT_2, 3300);
 
 volatile double leftSpeedSetpoint = 0;
 Error leftSpeedError;
-Motor left(PWM_LEFT_1, PWM_LEFT_2);
+Error leftPositionError;
+Motor left(PWM_LEFT_1, PWM_LEFT_2, 3300);
 
 void setup()
 {
@@ -54,7 +56,7 @@ void setup()
   Serial.println(as5600_1.isConnected() ? "true" : "false");
   delay(1000);
 
-  equalSpeedSet(150);
+  equalSpeedSet(1500);
 }
 
 
@@ -70,13 +72,13 @@ void loop() {
     //Serial.println(as5600.detectMagnet());
     //Serial.println(analogRead(FR_TCRT));
     //line_sensing_correction();
-  // if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint / 255.0 * 3000, 1.0 * getAngularSpeed(&as5600_0) /* * WHEEL_RADIUS / 360.0 */, dt);
+  // if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_0) /* * WHEEL_RADIUS / 360.0 */, dt);
   // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1) * WHEEL_RADIUS / 360.0, dt);
   // right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
   // left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
 
-  if (as5600_0.detectMagnet()) rightSpeedError.updateError(30.0, as5600_0.readAngle()/4096.0 * 360/* * WHEEL_RADIUS / 360.0 */, dt);
-  right.setSpeed(GAIN_P*rightSpeedError.p + GAIN_D*rightSpeedError.d);
+  if (as5600_0.detectMagnet()) rightPositionError.updateError(30.0, as5600_0.readAngle()/4096.0 * 360/* * WHEEL_RADIUS / 360.0 */, dt);
+  right.setSpeed(GAIN_P*rightPositionError.p + GAIN_D*rightPositionError.d);
 
   Serial.print("Setpoint: ");
   Serial.println(rightSpeedSetpoint);
