@@ -17,11 +17,9 @@ Motor::Motor(int pin1, int pin2){
   int pwm: a value between -255 and 255, where the sign gives direction
 */
 void Motor::setSpeed(int pwm) {
-    analogWrite(pinA, 0);
-    analogWrite(pinB, 0);
   if (pwm >= 0) {
-    analogWrite(pinA, pwm);
     analogWrite(pinB, 0);
+    analogWrite(pinA, pwm);
   } else {
     analogWrite(pinA, 0);
     analogWrite(pinB, -pwm);

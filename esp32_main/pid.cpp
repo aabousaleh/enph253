@@ -12,15 +12,21 @@ Error::Error() {
   eLog[2] = 0;
 };
 
-void updateError(Error *e, double s, double r, double dt) {
+void Error::updateError(double s, double r, double dt) {
   //distances d = {1,2};
-  e->eLog[2] = e->eLog[1];
-  e->eLog[1] = e->eLog[0];
-  e->eLog[0] = s - r;
+  eLog[2] = eLog[1];
+  eLog[1] = eLog[0];
+  eLog[0] = s - r;
 
-  e->p = e->eLog[0];
-  e->d = (e->eLog[0] - e->eLog[2]) / (2*dt);
-  e->i += (e->eLog[0] + 4 * e->eLog[1] + e->eLog[2]) * dt / 3;
+  p = eLog[0];
+  d = (eLog[0] - eLog[2]) / (2*dt);
+  i += (eLog[0] + 4 * eLog[1] + eLog[2]) * dt / 3;
 
+  Serial.print("Setpoint, Reading, and P-Error: ");
+  Serial.print(s);
+  Serial.print(" ");
+  Serial.print(r);
+  Serial.print(" ");
+  Serial.println(p);
   //return e;
 };

@@ -37,7 +37,7 @@
 //wheel radius in cm
 #define WHEEL_RADIUS 3.35
 
-#define GAIN_P 1
+#define GAIN_P 0.001
 #define GAIN_I 0
 #define GAIN_D 0
 
