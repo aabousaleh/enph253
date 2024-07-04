@@ -5,6 +5,7 @@
 #include "definitions.h"
 #include "arduino-timer.h"
 #include "map.h"
+#include "movement.ino"
 
 auto timer = timer_create_default();
 
@@ -39,6 +40,15 @@ void setup()
   Serial.begin(115200);
 
   pinMode(FR_TCRT, INPUT);
+  pinMode(FL_TCRT, INPUT);
+  pinMode(BR_TCRT, INPUT);
+  pinMode(BL_TCRT, INPUT);
+
+  pinMode(RS_TCRT, INPUT);
+  pinMode(LS_TCRT, INPUT);
+
+  attachInterrupt(RS_TCRT, m.updateLocationRight, RISING);
+  attachInterrupt(LS_TCRT, m.updateLocationLeft, RISING);
 
   //initialize the i2c busses
   Wire.begin(I2C_SDA0, I2C_SCL0);
@@ -92,7 +102,14 @@ void loop() {
   delay(10);
 }
 
+
+void updateEncoderPosition(Map *m) {
+  
+}
+
+
 //returns angular speed in degrees/second
+//positive for forward rotation, negative for backward rotation
 float getAngularSpeed(AS5600 *a) {
 
   if (!a->detectMagnet()) return 0;

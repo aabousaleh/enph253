@@ -13,7 +13,6 @@ Error::Error() {
 };
 
 void Error::updateError(double s, double r, double dt) {
-  //distances d = {1,2};
   eLog[2] = eLog[1];
   eLog[1] = eLog[0];
   eLog[0] = s - r;
@@ -28,5 +27,4 @@ void Error::updateError(double s, double r, double dt) {
   Serial.print(r);
   Serial.print(" ");
   Serial.println(p);
-  //return e;
 };

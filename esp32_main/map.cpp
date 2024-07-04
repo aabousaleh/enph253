@@ -1,7 +1,6 @@
 #include "map.h"
 
-Map::Map(/*int numStations, String _stations[numStations]*/) {
-  /*stations = _stations;*/
+Map::Map() {
   location = 0;
   facingDirection = 1;
   drivingDirection = 1;
@@ -20,10 +19,6 @@ int Map::getMovingDirection() {
   return facingDirection * drivingDirection;
 };
 
-/*String getLocation() {
-  return stations[location];
-}*/
-
 int Map::getLocation() {
   return location;
 };
@@ -41,13 +36,13 @@ void Map::flipDrivingDirection() {
 };
 
 void IRAM_ATTR Map::updateLocationRight() {
-  if (facingDirection == 1) {
+  if (facingDirection == (1 - ROBOT_ID*2)) { // 1 - 0*2 = 1, 1 - 1*2 = -1
     location += drivingDirection;
   }
 };
 
 void IRAM_ATTR Map::updateLocationLeft() {
-  if (facingDirection == -1) {
+  if (facingDirection == (-1 + ROBOT_ID*2) {
     location -= drivingDirection;
   }
 };

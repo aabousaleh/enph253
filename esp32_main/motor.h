@@ -12,7 +12,6 @@ class Motor{
     Motor(int _pinA, int _pinB, float _maxSpeed);
 
     /*
-      Motor *motor: pointer to the motor you want to drive
       float speed: a value <= maxSpeed, where the sign gives direction. Given in deg/s
     */
     void setSpeed(float speed);
