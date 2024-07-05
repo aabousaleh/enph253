@@ -8,7 +8,7 @@ const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum
 #define PWM_RIGHT_2 32
 
 //left motor pwm pins
-#define PWM_LEFT_1 39
+#define PWM_LEFT_1 20 //39  //temporary for testing
 #define PWM_LEFT_2 25
 
 //right encoder i2c
@@ -38,13 +38,12 @@ const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum
 #define LS_TCRT 7
 
 // steering constant for corrections in cm/s
-#define STEERING_CONSTANT 0.05
 
 //wheel radius in cm
 #define WHEEL_RADIUS 3.35
 
-#define GAIN_P 0.275
-#define GAIN_I 0
+#define GAIN_P 0.15675
+#define GAIN_I 0.005
 #define GAIN_D 0
 
 #endif

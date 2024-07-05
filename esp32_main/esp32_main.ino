@@ -15,6 +15,10 @@ AS5600 as5600_0(&Wire);
 //initialize i2c bus for left encoder
 AS5600 as5600_1(&Wire1);
 
+const int MAX_SPEED = 4000;
+const int BASE_SPEED = 2500;
+double STEERING_CONSTANT = 0.4 * BASE_SPEED;
+
 double setpoint = 0; //in cm
 double dt = 0.01; //in s
 unsigned long timeStart = 0;
@@ -27,12 +31,14 @@ Map m;
 volatile double rightSpeedSetpoint = 0; // cm/s
 Error rightSpeedError;
 Error rightPositionError;
-Motor right(PWM_RIGHT_1, PWM_RIGHT_2, 3300); //3300 is totally random value that is """"SOMEWHAT"""" close to real. adjust as needed
+Motor right(PWM_RIGHT_1, PWM_RIGHT_2, MAX_SPEED); //3300 is totally random value that is """"SOMEWHAT"""" close to real. adjust as needed
 
 volatile double leftSpeedSetpoint = 0;
 Error leftSpeedError;
 Error leftPositionError;
-Motor left(PWM_LEFT_1, PWM_LEFT_2, 3300);
+Motor left(PWM_LEFT_1, PWM_LEFT_2, MAX_SPEED);
+
+volatile double position = 0;
 
 void setup()
 {
@@ -47,8 +53,8 @@ void setup()
   pinMode(RS_TCRT, INPUT);
   pinMode(LS_TCRT, INPUT);
 
-  attachInterrupt(RS_TCRT, m.updateLocationRight, RISING);
-  attachInterrupt(LS_TCRT, m.updateLocationLeft, RISING);
+  // attachInterrupt(RS_TCRT, m.updateLocationRight, RISING);
+  // attachInterrupt(LS_TCRT, m.updateLocationLeft, RISING);
 
   //initialize the i2c busses
   Wire.begin(I2C_SDA0, I2C_SCL0);
@@ -67,7 +73,7 @@ void setup()
   Serial.println(as5600_1.isConnected() ? "true" : "false");
   delay(1000);
 
-  equalSpeedSet(1500);
+  equalSpeedSet(BASE_SPEED);
 }
 
 
@@ -76,35 +82,48 @@ void loop() {
   // Serial.print("\t");
   // Serial.println(as5600_1.readAngle());
 
-  if (Serial.available() > 0) rightSpeedSetpoint = Serial.parseFloat();
-  // timeStart = millis();
+  //if (Serial.available() > 0) rightSpeedSetpoint = Serial.parseFloat();
+  //timeStart = millis();
   
     // timer.tick();
     //Serial.println(as5600.detectMagnet());
     //Serial.println(analogRead(FR_TCRT));
     //line_sensing_correction();
-  // if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_0) /* * WHEEL_RADIUS / 360.0 */, dt);
+  //if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_0) /* * WHEEL_RADIUS / 360.0 */, dt);
   // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1) * WHEEL_RADIUS / 360.0, dt);
-  // right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
+  //right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
   // left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
 
-  if (as5600_0.detectMagnet()) rightPositionError.updateError(30.0, as5600_0.readAngle()/4096.0 * 360/* * WHEEL_RADIUS / 360.0 */, dt);
-  right.setSpeed(GAIN_P*rightPositionError.p + GAIN_D*rightPositionError.d);
+  // if (as5600_0.detectMagnet()) rightPositionError.updateError(30.0, as5600_0.readAngle()/4096.0 * 360/* * WHEEL_RADIUS / 360.0 */, dt);
+  // right.setSpeed(GAIN_P*rightPositionError.p + GAIN_D*rightPositionError.d);
 
-  Serial.print("Setpoint: ");
-  Serial.println(rightSpeedSetpoint);
-  Serial.print("Speed (raw): ");
-  Serial.println(getAngularSpeed(&as5600_0));
-  Serial.print("Error: ");
-  Serial.println(rightSpeedError.p);
-  //Serial.println("\n");
-  // Serial.println(as5600_0.detectMagnet());
-  delay(10);
+  // Serial.print("Setpoint: ");
+  // Serial.println(rightSpeedSetpoint);
+  // Serial.print("Speed (raw): ");
+  // Serial.println(getAngularSpeed(&as5600_0));
+  // // Serial.print("Error: ");
+  // // Serial.println(rightSpeedError.p);
+  // timeEnd = millis();
+  // Serial.println(timeEnd - timeStart);
+
+  // //Serial.println(as5600_0.detectMagnet());
+  // int d = timeEnd - timeStart
+  // int d1 = d > dt ? 0 : d;
+  // delay(d1*1000);
+      // line_sensing_correction();
+      // right.setSpeed(rightSpeedSetpoint);
+      // left.setSpeed(leftSpeedSetpoint);
+
+  right.setSpeed(-rightSpeedSetpoint);
+  left.setSpeed(leftSpeedSetpoint);
+  delay(1000);
+  brake();
+  delay(3000);
 }
 
 
-void updateEncoderPosition(Map *m) {
-  
+void updateEncoderPosition(Map *m, AS5600 *a1, AS5600 *a2) {
+  position += m->getMovingDirection() * (getAngularSpeed(a1) + getAngularSpeed(a2))/2 * dt;
 }
 
 
@@ -138,17 +157,27 @@ void line_sensing_correction() {
 
   if (m.getDrivingDirection() == 1) {
     if (front_correction > 0) {
-      rightSpeedSetpoint -= STEERING_CONSTANT;
+      rightSpeedSetpoint = BASE_SPEED - STEERING_CONSTANT;
+      leftSpeedSetpoint = BASE_SPEED;
     }
     else if (front_correction < 0) {
-      leftSpeedSetpoint -= STEERING_CONSTANT;
+      leftSpeedSetpoint =  BASE_SPEED - STEERING_CONSTANT;
+      rightSpeedSetpoint = BASE_SPEED;
+    } else {
+      leftSpeedSetpoint = BASE_SPEED;
+      rightSpeedSetpoint = BASE_SPEED;
     }
   } else {
     if (back_correction > 0) {
-      rightSpeedSetpoint -= STEERING_CONSTANT;
+      leftSpeedSetpoint = BASE_SPEED - STEERING_CONSTANT;
+      rightSpeedSetpoint = BASE_SPEED;
     }
     else if (back_correction < 0) {
-      leftSpeedSetpoint -= STEERING_CONSTANT;
+      rightSpeedSetpoint = BASE_SPEED - STEERING_CONSTANT;
+      leftSpeedSetpoint = BASE_SPEED;
+    } else {
+      leftSpeedSetpoint = BASE_SPEED;
+      rightSpeedSetpoint = BASE_SPEED;
     }
   }
 }
@@ -164,7 +193,7 @@ void move() {
   //timer.at(seconds / 1000.0, brake);
 }
 
-bool brake(void *) {
+bool brake() {
   right.setSpeed(0); 
   left.setSpeed(0);
   return true;

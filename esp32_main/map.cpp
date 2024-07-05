@@ -1,4 +1,5 @@
 #include "map.h"
+#include "definitions.h"
 
 Map::Map() {
   location = 0;
@@ -42,7 +43,7 @@ void IRAM_ATTR Map::updateLocationRight() {
 };
 
 void IRAM_ATTR Map::updateLocationLeft() {
-  if (facingDirection == (-1 + ROBOT_ID*2) {
+  if (facingDirection == (-1 + ROBOT_ID*2)) {
     location -= drivingDirection;
   }
 };
