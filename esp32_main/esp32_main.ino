@@ -54,7 +54,7 @@ void setup()
   pinMode(RS_TCRT, INPUT);
   pinMode(LS_TCRT, INPUT);
 
-  // attachInterrupt(RS_TCRT, m.updateLocationRight, RISING);
+  // attachInterrupt(RS_TCRT, m.updateLocationRight, RISING); broken
   // attachInterrupt(LS_TCRT, m.updateLocationLeft, RISING);
 
   //initialize the i2c busses
@@ -68,7 +68,7 @@ void setup()
   Serial.println(as5600_0.isConnected() ? "true" : "false");
   delay(1000);
 
-  as5600_1.begin();  //  set direction pin.
+  as5600_1.begin();
   as5600_1.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
   Serial.print("Connect device 1: ");
   Serial.println(as5600_1.isConnected() ? "true" : "false");
@@ -126,6 +126,7 @@ void updateEncoderPosition(Map *m, AS5600 *a1, AS5600 *a2) {
 
 //returns angular speed in degrees/second
 //positive for forward rotation, negative for backward rotation
+//TODO: this method is scuffed af, results in huge negative speed when rotation resets. FIX ASAP
 float getAngularSpeed(AS5600 *a) {
 
   if (!a->detectMagnet()) return 0;
@@ -143,7 +144,7 @@ float getAngularSpeed(AS5600 *a) {
 }
 
 void line_sensing_correction() {
-  //tape is higher value
+  //higher value means on black tape
   double fr = analogRead(FR_TCRT);
   double fl = analogRead(FL_TCRT);
   double br = analogRead(BR_TCRT);

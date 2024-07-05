@@ -10,10 +10,10 @@ class Map{
     int getFacingDirection(); //1 is to the right, -1 is to the left
     int getDrivingDirection(); //1 is forward, -1 is backward
     int getMovingDirection(); //1 is moving right, -1 is moving left
-    int getLocation();
+    int getLocation(); //5 total locations, separated by black tape lines on middle row stations
     void flipFacingDirection(); //flips facing direction
     void flipDrivingDirection(); //flips driving direction
-    String getState();
+    String getState(); //returns current state of what the robot is trying to do
 
   protected:
     int facingDirection;

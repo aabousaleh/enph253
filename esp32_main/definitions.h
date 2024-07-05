@@ -19,10 +19,6 @@ const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum
 #define I2C_SDA1 13
 #define I2C_SCL1 15
 
-//testing i2c pins
-//#define I2C_SDA2 19
-//#define I2C_SCL2 8
-
 //front right tcrt
 #define FR_TCRT 35
 //front left tcrt
@@ -36,8 +32,6 @@ const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum
 #define RS_TCRT 5
 //left station-sensing tcrt
 #define LS_TCRT 7
-
-// steering constant for corrections in cm/s
 
 //wheel radius in cm
 #define WHEEL_RADIUS 3.35
