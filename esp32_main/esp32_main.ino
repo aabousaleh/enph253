@@ -7,7 +7,7 @@
 #include "map.h"
 #include "movement.ino"
 
-auto timer = timer_create_default();
+// auto timer = timer_create_default();
 
 //initialize i2c bus for right encoder
 AS5600 as5600_0(&Wire);
@@ -17,7 +17,8 @@ AS5600 as5600_1(&Wire1);
 
 const int MAX_SPEED = 4000;
 const int BASE_SPEED = 2500;
-double STEERING_CONSTANT = 0.4 * BASE_SPEED;
+const double STEERING_CONSTANT = 0.35 * BASE_SPEED;
+const double TURNING_CONSTANT = 0.10 * BASE_SPEED;
 
 double setpoint = 0; //in cm
 double dt = 0.01; //in s
@@ -114,11 +115,7 @@ void loop() {
       // right.setSpeed(rightSpeedSetpoint);
       // left.setSpeed(leftSpeedSetpoint);
 
-  right.setSpeed(-rightSpeedSetpoint);
-  left.setSpeed(leftSpeedSetpoint);
-  delay(1000);
-  brake();
-  delay(3000);
+  turn180(&m, 1);
 }
 
 
@@ -193,13 +190,26 @@ void move() {
   //timer.at(seconds / 1000.0, brake);
 }
 
-bool brake() {
+void brake() {
   right.setSpeed(0); 
   left.setSpeed(0);
-  return true;
 }
 
-void turn180(Map *m) {
+//dir: 1 CW, -1 CCW
+void turn180(Map *m, int dir) {
   //TODO write this function
+  if (dir == 1) {
+    right.setSpeed(TURNING_CONSTANT);
+    left.setSpeed(-TURNING_CONSTANT);
+    delay(1000); //change
+    brake();
+    delay(1000);
+  } else if (dir == -1) {
+    right.setSpeed(-TURNING_CONSTANT);
+    left.setSpeed(TURNING_CONSTANT);
+    delay(1000);
+    brake();
+    delay(1000);
+  }
   m->flipFacingDirection();
 }
