@@ -41,6 +41,8 @@ Motor left(PWM_LEFT_1, PWM_LEFT_2, MAX_SPEED);
 
 volatile double position = 0;
 
+long int lastTime = 0;
+
 void setup()
 {
   
@@ -53,6 +55,12 @@ void setup()
 
   pinMode(RS_TCRT, INPUT);
   pinMode(LS_TCRT, INPUT);
+
+  pinMode(PUMP_SENSE, INPUT);
+  pinMode(PUMP, OUTPUT);
+  pinMode(VALVE, OUTPUT);
+
+  digitalWrite(PUMP, LOW);
 
   // attachInterrupt(RS_TCRT, m.updateLocationRight, RISING); broken
   // attachInterrupt(LS_TCRT, m.updateLocationLeft, RISING);
@@ -84,7 +92,7 @@ void loop() {
   // Serial.println(as5600_1.readAngle());
 
   //if (Serial.available() > 0) rightSpeedSetpoint = Serial.parseFloat();
-  //timeStart = millis();
+  timeStart = millis();
   
     // timer.tick();
     //Serial.println(as5600.detectMagnet());
@@ -115,7 +123,14 @@ void loop() {
       // right.setSpeed(rightSpeedSetpoint);
       // left.setSpeed(leftSpeedSetpoint);
 
-  turn180(&m, 1);
+  //turn180(&m, 1);
+ // Serial.println(m.TAPE_WIDTH);
+  Serial.println(analogRead(PUMP_SENSE));
+  // if (timeStart - lastTime > 2000) {
+    // lastTime = timeStart;
+    digitalWrite(PUMP, HIGH);
+  // }
+  delay(50);
 }
 
 

@@ -22,7 +22,7 @@ class Map{
     void IRAM_ATTR updateLocationRight(); //when right tape sensor detects tape
     void IRAM_ATTR updateLocationLeft(); //when left tape sensor detect tape
     int stateIndex; //variable to keep track of the current state of the robot
-    String states[4] = {"Speeding", "Adjusting", "Spinning", "Grabbing"}; //adjust size as you add states
+    String states[5] = {"Speeding", "Adjusting", "Spinning", "Arming", "Waiting"}; //adjust size as you add states
 
 };
 #endif

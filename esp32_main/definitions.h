@@ -8,7 +8,7 @@ const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum
 #define PWM_RIGHT_2 32
 
 //left motor pwm pins
-#define PWM_LEFT_1 20 //39  //temporary for testing
+#define PWM_LEFT_1 4
 #define PWM_LEFT_2 25
 
 //right encoder i2c
@@ -32,6 +32,13 @@ const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum
 #define RS_TCRT 5
 //left station-sensing tcrt
 #define LS_TCRT 7
+
+#define PUMP 20
+#define VALVE 0
+#define PUMP_SENSE 27 //current sense 1
+#define VALVE_SENSE 33 //current sense 2
+
+#define CLAW_SERVO 2
 
 //wheel radius in cm
 #define WHEEL_RADIUS 3.35
