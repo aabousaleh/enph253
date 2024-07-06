@@ -69,10 +69,10 @@ ArduinoOTA.handle();
 ## Uploading OTA
 Initially, the code must be uploaded over regular USB. Once the above OTA code is included, every subsequent upload can be done over the air as long as the above code is there.
 ### Arduino IDE
-Simply go to Tools->Port and under network port select the ESP32 desired.
+Simply go to Tools->Port and under "network port" select the ESP32 desired.
 
 ### VS Code
-At the very bottom of Visual Studio where the upload and compile buttons are, to the left there is a plug icon that says "auto" next to it. Click on this then select custom and type in the ID address of the desired ESP32.
+At the very bottom of Visual Studio where the upload and compile buttons are, to the left there is a plug icon that says "auto" next to it. Click on this then select custom and type in the IP address of the desired ESP32.
 
 Now when you upload it will upload OTA.
 
