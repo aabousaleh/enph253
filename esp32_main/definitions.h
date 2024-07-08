@@ -34,17 +34,20 @@ const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum
 #define LS_TCRT 7
 
 #define PUMP 20
-#define VALVE 0
-#define PUMP_SENSE 27 //current sense 1
-#define VALVE_SENSE 33 //current sense 2
+#define VALVE 27
+#define PUMP_SENSE 33 //current sense 2
+//#define VALVE_SENSE 33 //current sense 1
 
 #define CLAW_SERVO 2
+
+#define MICRO_SWITCH_1 19
+#define MICRO_SWITCH_2 8
 
 //wheel radius in cm
 #define WHEEL_RADIUS 3.35
 
-#define GAIN_P 0.15675
-#define GAIN_I 0.005
+#define GAIN_P 0.015675
+#define GAIN_I 0.0005
 #define GAIN_D 0
 
 #endif

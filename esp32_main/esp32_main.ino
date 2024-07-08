@@ -7,6 +7,17 @@
 #include "map.h"
 #include "movement.ino"
 
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+
+const char* ssid = "Kirby ESP32 Testing Server";
+const char* password = "KirbySucc";
+
+WiFiServer server(80);
+WiFiClient RemoteClient;
+
 // auto timer = timer_create_default();
 
 //initialize i2c bus for right encoder
@@ -16,7 +27,7 @@ AS5600 as5600_0(&Wire);
 AS5600 as5600_1(&Wire1);
 
 const int MAX_SPEED = 4000;
-const int BASE_SPEED = 2500;
+int BASE_SPEED = 2500;
 const double STEERING_CONSTANT = 0.35 * BASE_SPEED;
 const double TURNING_CONSTANT = 0.10 * BASE_SPEED;
 
@@ -25,7 +36,8 @@ double dt = 0.01; //in s
 unsigned long timeStart = 0;
 unsigned long timeEnd = dt*1000; //convert to ms
 
-float lastAngle = 0; //for getAngularSpeed
+float lastAngle_0 = 0; //for getAngularSpeed
+float lastAngle_1 = 0;
 
 Map m;
 
@@ -56,9 +68,14 @@ void setup()
   pinMode(RS_TCRT, INPUT);
   pinMode(LS_TCRT, INPUT);
 
+  pinMode(MICRO_SWITCH_1, INPUT);
+  pinMode(MICRO_SWITCH_2, INPUT);
+
   pinMode(PUMP_SENSE, INPUT);
   pinMode(PUMP, OUTPUT);
   pinMode(VALVE, OUTPUT);
+
+  pinMode(CLAW_SERVO, OUTPUT);
 
   digitalWrite(PUMP, LOW);
 
@@ -68,6 +85,7 @@ void setup()
   //initialize the i2c busses
   Wire.begin(I2C_SDA0, I2C_SCL0);
   Wire1.begin(I2C_SDA1, I2C_SCL1);
+
 
   //initialize right encoder
   as5600_0.begin();
@@ -83,25 +101,46 @@ void setup()
   delay(1000);
 
   equalSpeedSet(BASE_SPEED);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    delay(5000);
+    ESP.restart();
+  }
+
+  server.begin();
 }
+
+bool pump_on = false;
 
 
 void loop() {
+
+  if (server.hasClient()) {
+    if (RemoteClient.connected()) {
+      Serial.println("Connection rejected");
+      server.available().stop();
+    } else {
+      Serial.println("Connection accepted");
+      RemoteClient = server.available();
+    }
+  }
   // Serial.print(as5600_0.readAngle());
   // Serial.print("\t");
   // Serial.println(as5600_1.readAngle());
 
-  //if (Serial.available() > 0) rightSpeedSetpoint = Serial.parseFloat();
-  timeStart = millis();
+  // if (Serial.available() > 0) equalSpeedSet(Serial.parseFloat());
+  // timeStart = millis();
   
     // timer.tick();
     //Serial.println(as5600.detectMagnet());
     //Serial.println(analogRead(FR_TCRT));
     //line_sensing_correction();
-  //if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_0) /* * WHEEL_RADIUS / 360.0 */, dt);
-  // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1) * WHEEL_RADIUS / 360.0, dt);
-  //right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
-  // left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
+  if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_0, 0), dt);
+  if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1, 1), dt);
+  right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
+  left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
 
   // if (as5600_0.detectMagnet()) rightPositionError.updateError(30.0, as5600_0.readAngle()/4096.0 * 360/* * WHEEL_RADIUS / 360.0 */, dt);
   // right.setSpeed(GAIN_P*rightPositionError.p + GAIN_D*rightPositionError.d);
@@ -119,39 +158,63 @@ void loop() {
   // int d = timeEnd - timeStart
   // int d1 = d > dt ? 0 : d;
   // delay(d1*1000);
-      // line_sensing_correction();
+      //line_sensing_correction();
       // right.setSpeed(rightSpeedSetpoint);
       // left.setSpeed(leftSpeedSetpoint);
 
   //turn180(&m, 1);
  // Serial.println(m.TAPE_WIDTH);
-  Serial.println(analogRead(PUMP_SENSE));
+  // Serial.println(analogRead(PUMP_SENSE));
   // if (timeStart - lastTime > 2000) {
-    // lastTime = timeStart;
-    digitalWrite(PUMP, HIGH);
+  //   lastTime = timeStart;
+  //   digitalWrite(CLAW_SERVO, !digitalRead(CLAW_SERVO));
+  // // ledcWrite(CLAW_SERVO, 25);
   // }
-  delay(50);
+  // digitalWrite()
+  if (RemoteClient.connected()) {
+    if (RemoteClient.available() > 0) {
+      BASE_SPEED = RemoteClient.parseFloat();
+      equalSpeedSet(BASE_SPEED);
+      // delay(5);
+      // RemoteClient.println(rightSpeedSetpoint);
+
+    }
+
+    RemoteClient.print("Right Speed: ");
+    RemoteClient.print(getAngularSpeed(&as5600_0, 0));
+
+    RemoteClient.print("  |  Left Speed: ");
+    RemoteClient.println(getAngularSpeed(&as5600_1, 1));
+
+    RemoteClient.println(BASE_SPEED);
+  }
+  delay(8);
 }
 
 
-void updateEncoderPosition(Map *m, AS5600 *a1, AS5600 *a2) {
-  position += m->getMovingDirection() * (getAngularSpeed(a1) + getAngularSpeed(a2))/2 * dt;
+void updateEncoderPosition(Map *m, AS5600 *a0, AS5600 *a1) {
+  position += m->getMovingDirection() * (getAngularSpeed(a0, 0) + getAngularSpeed(a1, 1))/2 * dt;
 }
 
 
 //returns angular speed in degrees/second
 //positive for forward rotation, negative for backward rotation
 //TODO: this method is scuffed af, results in huge negative speed when rotation resets. FIX ASAP
-float getAngularSpeed(AS5600 *a) {
+float getAngularSpeed(AS5600 *a, int encoderNum) {
 
   if (!a->detectMagnet()) return 0;
   //long now = millis();
   float angle = a->readAngle()/4096.0 * 360; //in degrees
 
   //long deltaT = now - lastTime;
-  float deltaA = angle - lastAngle;
-
-  lastAngle = angle;
+  float deltaA = 0;
+  if (encoderNum == 0) {
+    deltaA = angle - lastAngle_0;
+    lastAngle_0 = angle;
+  } else if (encoderNum == 1) {
+    deltaA = angle - lastAngle_1;
+    lastAngle_1 = angle;
+  }
   
   float speed = deltaA / dt;
 
