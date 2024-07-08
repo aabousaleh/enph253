@@ -112,6 +112,6 @@ For the first time only you need to enable a command line feature:
 * Run command prompt as administrator
 * Execute the following command `dism /online /Enable-Feature /FeatureName:TelnetClient`
 
-For all subsequent connections simply go to the command prompt and execute the following command `telnet 192.168.255.255 80` with the appropriate IP replaced.
+For all subsequent connections simply go to the command prompt and execute the following command `telnet 192.168.~~~.~~~ 80` with the appropriate IP replaced.
 
 Pro tip if the ESP32 disconnects; for example if you reset it. Simply type a few random characters in the command line, then it will automatically disconnect and you can press the up arrow and enter to reconnect.
