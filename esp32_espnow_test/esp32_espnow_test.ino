@@ -7,50 +7,15 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BME280.h>
-
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-
-#define SCREEN_WIDTH 128  // OLED display width, in pixels
-#define SCREEN_HEIGHT 64  // OLED display height, in pixels
-
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
-
-Adafruit_BME280 bme;
-
-// REPLACE WITH THE MAC Address of your receiver 
+// REPLACE WITH THE MAC Address of the other ESP32
 uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-// Define variables to store BME280 readings to be sent
-float temperature;
-float humidity;
-float pressure;
+long timeStart;
+long timeEnd;
 
-// Define variables to store incoming readings
-float incomingTemp;
-float incomingHum;
-float incomingPres;
+String dataToBeSent = "Hi, I am robot #0!"; //change for each esp
 
-// Variable to store if sending data was successful
-String success;
-
-//Structure example to send data
-//Must match the receiver structure
-typedef struct struct_message {
-    float temp;
-    float hum;
-    float pres;
-} struct_message;
-
-// Create a struct_message called BME280Readings to hold sensor readings
-struct_message BME280Readings;
-
-// Create a struct_message to hold incoming sensor readings
-struct_message incomingReadings;
+String dataReceived;
 
 esp_now_peer_info_t peerInfo;
 
@@ -58,40 +23,19 @@ esp_now_peer_info_t peerInfo;
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-  if (status ==0){
-    success = "Delivery Success :)";
-  }
-  else{
-    success = "Delivery Fail :(";
-  }
 }
 
 // Callback when data is received
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-  memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
+  memcpy(&dataReceived, incomingData, sizeof(incomingReadings));
   Serial.print("Bytes received: ");
   Serial.println(len);
-  incomingTemp = incomingReadings.temp;
-  incomingHum = incomingReadings.hum;
-  incomingPres = incomingReadings.pres;
+  Serial.println(dataReceived);
 }
  
 void setup() {
   // Init Serial Monitor
   Serial.begin(115200);
-
-  // Init BME280 sensor
-  bool status = bme.begin(0x76);  
-  if (!status) {
-    Serial.println("Could not find a valid BME280 sensor, check wiring!");
-    while (1);
-  }
-
-  // Init OLED display
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;);
-  }
  
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
@@ -104,7 +48,7 @@ void setup() {
 
   // Once ESPNow is successfully Init, we will register for Send CB to
   // get the status of Trasnmitted packet
-  esp_now_register_send_cb(OnDataSent);
+  esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
   
   // Register peer
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
@@ -123,10 +67,15 @@ void setup() {
 void loop() {
 
   // Send message via ESP-NOW
-  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &BME280Readings, sizeof(BME280Readings));
+  timeStart = micros();
+  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) dataToBeSent, sizeof(dataToBeSent));
+  timeEnd = micros();
    
   if (result == ESP_OK) {
     Serial.println("Sent with success");
+    Serial.print("Data received: ");
+    Serial.println(dataReceived);
+    Serial.println(timeEnd - timeStart);
   }
   else {
     Serial.println("Error sending the data");
