@@ -27,9 +27,9 @@ AS5600 as5600_0(&Wire);
 AS5600 as5600_1(&Wire1);
 
 const int MAX_SPEED = 4000;
-int BASE_SPEED = 2500;
-const double STEERING_CONSTANT = 0.35 * BASE_SPEED;
-const double TURNING_CONSTANT = 0.10 * BASE_SPEED;
+int BASE_SPEED = 2000;
+double STEERING_CONSTANT = 0.4 * BASE_SPEED;
+double TURNING_CONSTANT = 0.10 * BASE_SPEED;
 
 double setpoint = 0; //in cm
 double dt = 0.01; //in s
@@ -44,7 +44,7 @@ Map m;
 volatile double rightSpeedSetpoint = 0; // cm/s
 Error rightSpeedError;
 Error rightPositionError;
-Motor right(PWM_RIGHT_1, PWM_RIGHT_2, MAX_SPEED); //3300 is totally random value that is """"SOMEWHAT"""" close to real. adjust as needed
+Motor right(PWM_RIGHT_1, PWM_RIGHT_2, MAX_SPEED);
 
 volatile double leftSpeedSetpoint = 0;
 Error leftSpeedError;
@@ -89,7 +89,7 @@ void setup()
 
   //initialize right encoder
   as5600_0.begin();
-  as5600_0.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
+  as5600_0.setDirection(AS5600_COUNTERCLOCK_WISE);  //  check encoder/magnet to make sure this is correct
   Serial.print("Connect device 0: ");
   Serial.println(as5600_0.isConnected() ? "true" : "false");
   delay(1000);
@@ -111,8 +111,6 @@ void setup()
 
   server.begin();
 }
-
-bool pump_on = false;
 
 
 void loop() {
@@ -136,11 +134,11 @@ void loop() {
     // timer.tick();
     //Serial.println(as5600.detectMagnet());
     //Serial.println(analogRead(FR_TCRT));
-    //line_sensing_correction();
-  if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_0, 0), dt);
-  if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1, 1), dt);
-  right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
-  left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
+  //   //line_sensing_correction();
+  // if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_0, 0), dt);
+  // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1, 1), dt);
+  // right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
+  // left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
 
   // if (as5600_0.detectMagnet()) rightPositionError.updateError(30.0, as5600_0.readAngle()/4096.0 * 360/* * WHEEL_RADIUS / 360.0 */, dt);
   // right.setSpeed(GAIN_P*rightPositionError.p + GAIN_D*rightPositionError.d);
@@ -158,9 +156,9 @@ void loop() {
   // int d = timeEnd - timeStart
   // int d1 = d > dt ? 0 : d;
   // delay(d1*1000);
-      //line_sensing_correction();
-      // right.setSpeed(rightSpeedSetpoint);
-      // left.setSpeed(leftSpeedSetpoint);
+  // line_sensing_correction();
+  right.setSpeed(rightSpeedSetpoint);
+  left.setSpeed(leftSpeedSetpoint);
 
   //turn180(&m, 1);
  // Serial.println(m.TAPE_WIDTH);
@@ -174,6 +172,8 @@ void loop() {
   if (RemoteClient.connected()) {
     if (RemoteClient.available() > 0) {
       BASE_SPEED = RemoteClient.parseFloat();
+      STEERING_CONSTANT = 0.4 * BASE_SPEED;
+      TURNING_CONSTANT = 0.10 * BASE_SPEED;
       equalSpeedSet(BASE_SPEED);
       // delay(5);
       // RemoteClient.println(rightSpeedSetpoint);
@@ -188,7 +188,7 @@ void loop() {
 
     RemoteClient.println(BASE_SPEED);
   }
-  delay(8);
+  delay(5);
 }
 
 

@@ -21,10 +21,10 @@ void Error::updateError(double s, double r, double dt) {
   d = (eLog[0] - eLog[2]) / (2*dt);
   i += (eLog[0] + 4 * eLog[1] + eLog[2]) * dt / 3;
 
-  Serial.print("Setpoint, Reading, and P-Error: ");
-  Serial.print(s);
-  Serial.print(" ");
-  Serial.print(r);
-  Serial.print(" ");
-  Serial.println(p);
+  // Serial.print("Setpoint, Reading, and P-Error: ");
+  // Serial.print(s);
+  // Serial.print(" ");
+  // Serial.print(r);
+  // Serial.print(" ");
+  // Serial.println(p);
 };
