@@ -79,8 +79,8 @@ void setup()
 
   digitalWrite(PUMP, LOW);
 
-  // attachInterrupt(RS_TCRT, m.updateLocationRight, RISING); broken
-  // attachInterrupt(LS_TCRT, m.updateLocationLeft, RISING);
+  attachInterrupt(digitalPinToInterrupt(RS_TCRT), updateLocationRight, RISING);
+  attachInterrupt(digitalPinToInterrupt(LS_TCRT), updateLocationLeft, RISING);
 
   //initialize the i2c busses
   Wire.begin(I2C_SDA0, I2C_SCL0);
@@ -291,4 +291,16 @@ void turn180(Map *m, int dir) {
     delay(1000);
   }
   m->flipFacingDirection();
+}
+
+void updateLocationRight() {
+  if (m.getFacingDirection() == (1 - ROBOT_ID*2)) { // 1 - 0*2 = 1, 1 - 1*2 = -1
+    m.location += m.getDrivingDirection();
+  }
+}
+
+void updateLocationLeft() {
+  if (m.getFacingDirection() == (-1 + ROBOT_ID*2)) {
+    m.location -= m.getDrivingDirection();
+  }
 }
