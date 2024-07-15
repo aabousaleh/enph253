@@ -31,17 +31,13 @@ int BASE_SPEED = 2000;
 double STEERING_CONSTANT = 0.4 * BASE_SPEED;
 double TURNING_CONSTANT = 0.10 * BASE_SPEED;
 
-double setpoint = 0; //in cm
 double dt = 0.01; //in s
 unsigned long timeStart = 0;
 unsigned long timeEnd = dt*1000; //convert to ms
 
-float lastAngle_0 = 0; //for getAngularSpeed
-float lastAngle_1 = 0;
-
 Map m;
 
-volatile double rightSpeedSetpoint = 0; // cm/s
+volatile double rightSpeedSetpoint = 0; //in degrees/sec
 Error rightSpeedError;
 Error rightPositionError;
 Motor right(PWM_RIGHT_1, PWM_RIGHT_2, MAX_SPEED);
@@ -135,8 +131,8 @@ void loop() {
     //Serial.println(as5600.detectMagnet());
     //Serial.println(analogRead(FR_TCRT));
   //   //line_sensing_correction();
-  // if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_0, 0), dt);
-  // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1, 1), dt);
+  // if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_0), dt);
+  // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1), dt);
   // right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
   // left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
 
@@ -181,10 +177,10 @@ void loop() {
     }
 
     RemoteClient.print("Right Speed: ");
-    RemoteClient.print(getAngularSpeed(&as5600_0, 0));
+    RemoteClient.print(getAngularSpeed(&as5600_0));
 
     RemoteClient.print("  |  Left Speed: ");
-    RemoteClient.println(getAngularSpeed(&as5600_1, 1));
+    RemoteClient.println(getAngularSpeed(&as5600_1));
 
     RemoteClient.println(BASE_SPEED);
   }
@@ -193,32 +189,29 @@ void loop() {
 
 
 void updateEncoderPosition(Map *m, AS5600 *a0, AS5600 *a1) {
-  position += m->getMovingDirection() * (getAngularSpeed(a0, 0) + getAngularSpeed(a1, 1))/2 * dt;
+  position += m->getMovingDirection() * (getAngularSpeed(a0) + getAngularSpeed(a1))/2 * dt * WHEEL_RADIUS; //dt here is update speed
 }
 
 
 //returns angular speed in degrees/second
 //positive for forward rotation, negative for backward rotation
-//TODO: this method is scuffed af, results in huge negative speed when rotation resets. FIX ASAP
-float getAngularSpeed(AS5600 *a, int encoderNum) {
+float getAngularSpeed(AS5600 *a) {
 
   if (!a->detectMagnet()) return 0;
   //long now = millis();
-  float angle = a->readAngle()/4096.0 * 360; //in degrees
+  float angleStart = a->readAngle()/4096.0 * 360; //in degrees
+  delay(1);
+  float angleEnd = a->readAngle()/4096.0 * 360;
+  float deltaA = angleEnd - angleStart;
 
-  //long deltaT = now - lastTime;
-  float deltaA = 0;
-  if (encoderNum == 0) {
-    deltaA = angle - lastAngle_0;
-    lastAngle_0 = angle;
-  } else if (encoderNum == 1) {
-    deltaA = angle - lastAngle_1;
-    lastAngle_1 = angle;
-  }
-  
-  float speed = deltaA / dt;
+  if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360; //fix for when it goes from 0 -> 360 or vice versa
+  float speed = deltaA / 0.001;
 
   return speed;
+}
+
+int sign(float a) {
+  return a >= 0 ? 1 : -1;
 }
 
 void line_sensing_correction() {
@@ -304,3 +297,30 @@ void updateLocationLeft() {
     m.location -= m.getDrivingDirection();
   }
 }
+
+/*
+
+switch (m.state) {
+  case SPEED:
+    //set speed according to distance from desired position
+    //interrupt on the destination station tape line: full brake + go to ADJUST
+    break;
+  case ADJUST:
+    //roll backwards slowly until you find edge of tape
+    //move precisely one tape-width's distance further
+    //go to ARM
+    break;
+  case SPIN:
+
+    break;
+  case ARM:
+
+    break;
+  case WAIT:
+
+    break;
+  default:
+
+    break;
+}
+*/

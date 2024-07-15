@@ -3,6 +3,14 @@
 
 const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum robot
 
+enum State {
+  SPEED,
+  ADJUST,
+  SPIN,
+  ARM,
+  WAIT
+};
+
 //right motor pwm pins
 #define PWM_RIGHT_1 26
 #define PWM_RIGHT_2 32
@@ -43,8 +51,8 @@ const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum
 #define MICRO_SWITCH_1 19
 #define MICRO_SWITCH_2 8
 
-//wheel radius in cm
-#define WHEEL_RADIUS 3.35
+//wheel radius in m
+#define WHEEL_RADIUS 0.0335
 
 #define GAIN_P 0.015675
 #define GAIN_I 0.0005

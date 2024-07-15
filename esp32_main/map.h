@@ -2,6 +2,7 @@
 #define MAP_H
 
 #include "Arduino.h"
+#include "definitions.h"
 
 class Map{
 
@@ -13,16 +14,17 @@ class Map{
     int getLocation(); //5 total locations, separated by black tape lines on middle row stations
     void flipFacingDirection(); //flips facing direction
     void flipDrivingDirection(); //flips driving direction
-    String getState(); //returns current state of what the robot is trying to do
+    State getState(); //returns current state of what the robot is trying to do
     void IRAM_ATTR updateLocationRight(); //when right tape sensor detects tape
     void IRAM_ATTR updateLocationLeft(); //when left tape sensor detect tape
     int location;
+    State state;
 
   protected:
     int facingDirection;
     int drivingDirection;
-    int stateIndex; //variable to keep track of the current state of the robot
-    String states[5] = {"Speeding", "Adjusting", "Spinning", "Arming", "Waiting"}; //adjust size as you add states
+    //int stateIndex; //variable to keep track of the current state of the robot
+    //String states[5] = {"Speeding", "Adjusting", "Spinning", "Arming", "Waiting"}; //adjust size as you add states
 
 };
 #endif

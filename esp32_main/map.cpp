@@ -1,5 +1,4 @@
 #include "map.h"
-#include "definitions.h"
 
 //all the following are in inches
 const double TAPE_WIDTH = 0.75;
@@ -25,7 +24,6 @@ Map::Map() {
   location = 0;
   facingDirection = 1;
   drivingDirection = 1;
-  stateIndex = 0;
 };
 
 int Map::getFacingDirection() {
@@ -45,8 +43,8 @@ int Map::getLocation() {
   return location;
 };
 
-String Map::getState() {
-  return states[stateIndex];
+State Map::getState() {
+  return state;
 };
 
 void Map::flipFacingDirection() {
