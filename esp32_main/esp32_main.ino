@@ -189,7 +189,7 @@ void loop() {
 
 
 void updateEncoderPosition(Map *m, AS5600 *a0, AS5600 *a1) {
-  position += m->getMovingDirection() * (getAngularSpeed(a0) + getAngularSpeed(a1))/2 * dt * WHEEL_RADIUS; //dt here is update speed
+  position += m->getMovingDirection() * (getAngularSpeed(a0) + getAngularSpeed(a1))/2 * dt * WHEEL_RADIUS; //dt here is update rate (period)
 }
 
 
@@ -214,7 +214,7 @@ int sign(float a) {
   return a >= 0 ? 1 : -1;
 }
 
-void line_sensing_correction() {
+void lineSensingCorrection() {
   //higher value means on black tape
   double fr = analogRead(FR_TCRT);
   double fl = analogRead(FL_TCRT);
@@ -304,18 +304,47 @@ switch (m.state) {
   case SPEED:
     //set speed according to distance from desired position
     //interrupt on the destination station tape line: full brake + go to ADJUST
+
+    //attachInterrupt (in interrupt, brake() + m.state = ADJUST)
+
+    lineSensingCorrection();
+    right.setSpeed(rightSpeedSetpoint);
+    left.setSpeed(leftSpeedSetpoint);
+
     break;
+
   case ADJUST:
     //roll backwards slowly until you find edge of tape
     //move precisely one tape-width's distance further
     //go to ARM
+
+    if (!tapeSensed()) {
+      equalSetSpeed(SLOW);
+    } else {
+      final = position +- TAPE_WIDTH / 2.0;
+      while (position != final) {
+        pid();
+      }
+      m.state = ARM;
+    }
+
     break;
+
   case SPIN:
 
     break;
   case ARM:
+    if (hasObject) {
+      place();
+      hasObject = false;
+    } else {
+      grab();
+      hasObject = true;
+    }
 
+    //update state now? depends on recipe tho, figure that out gl bro
     break;
+
   case WAIT:
 
     break;
