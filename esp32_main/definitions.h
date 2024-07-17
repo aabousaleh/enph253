@@ -11,6 +11,10 @@ enum State {
   WAIT
 };
 
+//arm servo pwm pins
+#define SHOULDER_SERVO 10
+#define ELBOW_SERVO 9
+
 //right motor pwm pins
 #define PWM_RIGHT_1 26
 #define PWM_RIGHT_2 32
