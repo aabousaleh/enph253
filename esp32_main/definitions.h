@@ -11,6 +11,8 @@ enum State {
   WAIT
 };
 
+#define PID_LOOP_INTERVAL 10 //in millis
+
 //right motor pwm pins
 #define PWM_RIGHT_1 26
 #define PWM_RIGHT_2 32
@@ -54,8 +56,7 @@ enum State {
 //wheel radius in m
 #define WHEEL_RADIUS 0.0335
 
-#define GAIN_P 0.015675
-#define GAIN_I 0.0005
+#define GAIN_I 0
 #define GAIN_D 0
 
 #endif

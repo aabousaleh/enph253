@@ -22,6 +22,21 @@
 //   }
 // }
 
+/*
+enum Instructions {
+  GO_TO,
+  GRAB,
+  PLACE,
+  SPIN,
+  SPECIAL
+};
+
+enum Stations
+
+*/
+
+//Instructions burgerInstructions[] = {GO_TO}
+
 // void burger() {
 //   switch (stage) {
 //     case "going buns":
