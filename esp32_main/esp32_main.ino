@@ -26,7 +26,7 @@ AS5600 as5600_0(&Wire);
 //initialize i2c bus for left encoder
 AS5600 as5600_1(&Wire1);
 
-const int MAX_SPEED = 4000;
+const int MAX_SPEED = 2400;
 int BASE_SPEED = 2000;
 double STEERING_CONSTANT = 0.4 * BASE_SPEED;
 double TURNING_CONSTANT = 0.10 * BASE_SPEED;
@@ -56,6 +56,8 @@ double leftAngularSpeed;
 volatile double position = 0;
 
 double GAIN_P = 0;
+
+double speeds[5] = {0,0,0,0,0}; //0 is new, 4 is old
 
 void setup()
 {
@@ -114,32 +116,41 @@ void setup()
   // server.begin();
   lastAngle_0 = as5600_0.readAngle() / 4096.0 * 360;
   lastAngle_1 = as5600_1.readAngle() / 4096.0 * 360;
+
 }
 
 
 void loop() {
   timeStart = millis();
-  if (Serial.available() > 0) GAIN_P = Serial.parseFloat();
+  if (Serial.available() > 0){
+    BASE_SPEED = Serial.parseInt();
+    equalSpeedSet(BASE_SPEED);
+  }// GAIN_P = Serial.parseFloat();
   if (timeStart - lastTime > PID_LOOP_INTERVAL) {
     rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
     leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
-    lineSensingCorrection();
+    //lineSensingCorrection();
+    updateSpeeds(rightAngularSpeed);
+
+    //as5600_0.detectMagnet();
     if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * rightAngularSpeed, dt);
     if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * leftAngularSpeed, dt);
     right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
     left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
-
+    //right.setSpeed(MAX_SPEED);
+    //right.setSpeed(BASE_SPEED);
+    Serial.print("Setpoint:");
+    Serial.print(BASE_SPEED);
+    Serial.print(",");
+    Serial.print("Right_Avg_Speed:");
+    Serial.println(averageSpeed());
     
     lastTime = timeStart;
   }
-  if (timeStart - lastTime2 > 100) {
-    Serial.print("Right_Speed:");
-    Serial.print(rightAngularSpeed);
-    Serial.print(",");
-    Serial.print("Left_Speed:");
-    Serial.println(leftAngularSpeed);
-    lastTime2 = timeStart;
-  }
+  //if (timeStart - lastTime2 > 20) {
+    
+  //   lastTime2 = timeStart;
+  // }
   // if (server.hasClient()) {
   //   if (RemoteClient.connected()) {
   //     Serial.println("Connection rejected");
@@ -203,10 +214,31 @@ void loop() {
 
   //   RemoteClient.println(BASE_SPEED);
   // }
-  timeEnd = millis();
+  delay(2);
+  //timeEnd = millis();
   //if (timeEnd - timeStart < dt*1000 - 2) delay(dt*1000 - 2 - (timeEnd - timeStart));
 }
 
+void updateSpeeds(double newSpeed) {
+  speeds[4] = speeds[3];
+  speeds[3] = speeds[2];
+  speeds[2] = speeds[1];
+  speeds[1] = speeds[0];
+  speeds[0] = newSpeed;
+}
+
+double averageSpeed() {
+  double firstAverage = (speeds[0] + speeds[1] + speeds[2] + speeds[3] + speeds[4]) / 5;
+  int outliers = 0;
+  double newAverage = firstAverage;
+  for (int i = 0; i < 5; i++) {
+    if (abs(firstAverage - speeds[i])/ firstAverage > 0.3) {
+      outliers++;
+      newAverage = ((newAverage * (6.0 - outliers)) - speeds[i]) / (5.0 - outliers);
+    }
+  }
+  return newAverage;
+}
 
 void updateEncoderPosition(Map *m, AS5600 *a0, AS5600 *a1) {
   position += m->getMovingDirection() * (getAngularSpeed(a0, 0) + getAngularSpeed(a1, 1))/2 * dt * WHEEL_RADIUS; //dt here is update rate (period)
@@ -216,24 +248,24 @@ void updateEncoderPosition(Map *m, AS5600 *a0, AS5600 *a1) {
 //returns angular speed in degrees/second
 //positive for forward rotation, negative for backward rotation
 float getAngularSpeed(AS5600 *a, int encoderNum) {
-
   if (!a->detectMagnet()) return 0;
   //long now = millis();
   //float angleStart = a->readAngle()/4096.0 * 360; //in degrees
   //delayMicroseconds(250);
-  float angleEnd = a->readAngle()/4096.0 * 360;
+  float angleEnd = a->readAngle()/4096.0 * 360; //TROUBLESOME LINE: DESPITE FOLLOWING ADDRESS, CAUSES CHANGES IN OTHER ENCODER READING
   float deltaA = 0;
   if (encoderNum == 0) {
     deltaA = angleEnd - lastAngle_0;
     lastAngle_0 = angleEnd;
-  } else {
+  } 
+  else {
     deltaA = angleEnd - lastAngle_1;
     lastAngle_1 = angleEnd;
   }
 
   if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360; //fix for when it goes from 0 -> 360 or vice versa
   float speed = deltaA / dt;
-  Serial.println(deltaA);
+  //Serial.println(deltaA);
 
   return speed;
 }
