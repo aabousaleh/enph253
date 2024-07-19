@@ -1,25 +1,5 @@
 #include "map.h"
 
-//all the following are in inches
-const double TAPE_WIDTH = 0.75;
-
-//+- 0.25 on the rest
-const double FIELD_LENGTH = 96;
-const double TOMATOES = 6;
-const double CUTTING = 29.75;
-const double COOKTOP = 72.25;
-const double PLATES = 90;
-
-//for robot id 0:
-const double PATTIES = 12.25;
-const double BUNS = 48;
-const double POTATOES = 84;
-
-//for robot id 1:
-const double CHEESE = 6;
-const double SERVING_AREA = 48;
-const double LETTUCE = 90;
-
 Map::Map() {
   location = 0;
   facingDirection = 1;

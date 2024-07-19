@@ -3,6 +3,26 @@
 
 const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum robot
 
+//all the following are in inches
+const double TAPE_WIDTH = 0.75;
+
+//+- 0.25 on the rest
+const double FIELD_LENGTH = 96;
+const double TOMATOES = 6;
+const double CUTTING = 29.75;
+const double COOKTOP = 72.25;
+const double PLATES = 90;
+
+//for robot id 0:
+const double PATTIES = 12.25;
+const double BUNS = 48;
+const double POTATOES = 84;
+
+//for robot id 1:
+const double CHEESE = 6;
+const double SERVING_AREA = 48;
+const double LETTUCE = 90;
+
 enum State {
   SPEED,
   ADJUST,
@@ -53,7 +73,7 @@ enum State {
 #define MICRO_SWITCH_1 19
 #define MICRO_SWITCH_2 8
 
-//wheel radius in m
-#define WHEEL_RADIUS 0.0335
+//wheel radius in inch
+#define WHEEL_RADIUS 1.3
 
 #endif

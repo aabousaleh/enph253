@@ -55,7 +55,7 @@ Error leftPositionError(4096);
 Motor left(PWM_LEFT_1, PWM_LEFT_2, MAX_SPEED);
 double leftAngularSpeed;
 
-volatile double position = 0;
+volatile double position = 5.75;
 
 double GAIN_P = 0.45;
 double GAIN_I = 0.35;
@@ -157,29 +157,12 @@ void loop() {
     }
   }
   if (timeStart - lastTime > PID_LOOP_INTERVAL) {
-    if (startTimer) {
-      timerStart1 = millis();
-      startTimer = false;
-      endTimer = false;
-    }
-    if (millis() - timerStart1 > 2 * 1000 && endTimer == false) {
-      equalSpeedSet(-BASE_SPEED / 3.0);
-      right.setSpeed(rightSpeedSetpoint);
-      double nlss = leftSpeedSetpoint;
-      if (BASE_SPEED > 0) {
-        nlss = -2000;
-      }
-      left.setSpeed(nlss);//top 4 lines are cooked
-      delay(25);
-      BRAKE_OFF = 0;
-      brake();
-      delay(1000);
-      BRAKE_OFF = 1;
-      BASE_SPEED = -BASE_SPEED;
-      m.flipDrivingDirection();
+    if (abs(COOKTOP - position) > 0.5) {
+      BASE_SPEED = 600 * sign(COOKTOP - position);
       equalSpeedSet(BASE_SPEED);
-      endTimer = true;
-      startTimer = true;
+    } else {
+      brake();
+      BRAKE_OFF = false;
     }
     dt = (timeStart - lastTime)/1000.0;
     rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
@@ -196,21 +179,22 @@ void loop() {
     //double oglss = leftSpeedSetpoint;
     if (leftSpeedSetpoint < 0) leftSpeedSetpoint -= 200;
     left.setSpeed((leftSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d) * BRAKE_OFF);
+    updateEncoderPosition();
     //leftSpeedSetpoint = oglss;
     //right.setSpeed(MAX_SPEED);
     //right.setSpeed(BASE_SPEED);
     //right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i);
-    // Serial.print("Setpoint:");
-    // Serial.print(BASE_SPEED);
-    // Serial.print(",");
-    // Serial.print("Right_Avg_Speed:");
-    // Serial.print(rightAverageSpeed);
-    // Serial.print(",");
-    // Serial.print("Left_Avg_Speed:");
-    // Serial.println(leftAverageSpeed);
-    // Serial.print(",");
-    // Serial.print("Right_Angle:");
-    // Serial.print(as5600_0.readAngle());
+    Serial.print("Setpoint:");
+    Serial.print(COOKTOP);
+    Serial.print(",");
+    Serial.print("Right_Avg_Speed:");
+    Serial.print(rightAverageSpeed);
+    Serial.print(",");
+    Serial.print("Left_Avg_Speed:");
+    Serial.print(leftAverageSpeed);
+    Serial.print(",");
+    Serial.print("Position:");
+    Serial.println(position);
     // Serial.print(",");
     // Serial.print("Left_Angle:");
     // Serial.println(as5600_1.readAngle());
@@ -293,7 +277,7 @@ void loop() {
 }
 
 void updateEncoderPosition() {
-  position += m.getMovingDirection() * (right.currentAverageSpeed + left.currentAverageSpeed)/720.0` * dt * WHEEL_RADIUS; //dt here is update rate (period)
+  position += sign(BASE_SPEED) * (right.currentAverageSpeed + left.currentAverageSpeed)/720.0 * dt * WHEEL_RADIUS * 6.28; //dt here is update rate (period)
 }
 
 
@@ -375,6 +359,10 @@ void move() {
 }
 
 void brake() {
+  // equalSpeedSet(-BASE_SPEED / 3.0);
+  // right.setSpeed(rightSpeedSetpoint);
+  // left.setSpeed(0);
+  // delay(25);
   right.setSpeed(0); 
   left.setSpeed(0);
 }
