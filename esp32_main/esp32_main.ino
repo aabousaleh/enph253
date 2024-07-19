@@ -27,9 +27,9 @@ AS5600 as5600_0(&Wire);
 AS5600 as5600_1(&Wire1);
 
 const int MAX_SPEED = 2200;
-int BASE_SPEED = 950;
-double STEERING_CONSTANT = 0.35 * BASE_SPEED;
-double TURNING_CONSTANT = 0.10 * BASE_SPEED;
+int BASE_SPEED = 600;
+double STEERING_CONSTANT = 0.065 * MAX_SPEED;
+double TURNING_CONSTANT = 0.125 * MAX_SPEED;
 
 double dt = PID_LOOP_INTERVAL / 1000.0; //in s
 unsigned long timeStart = 0;
@@ -163,7 +163,14 @@ void loop() {
       endTimer = false;
     }
     if (millis() - timerStart1 > 2 * 1000 && endTimer == false) {
-      equalSpeedSet(0);
+      equalSpeedSet(-BASE_SPEED / 3.0);
+      right.setSpeed(rightSpeedSetpoint);
+      double nlss = leftSpeedSetpoint;
+      if (BASE_SPEED > 0) {
+        nlss = -2000;
+      }
+      left.setSpeed(nlss);//top 4 lines are cooked
+      delay(25);
       BRAKE_OFF = 0;
       brake();
       delay(1000);
@@ -177,35 +184,36 @@ void loop() {
     dt = (timeStart - lastTime)/1000.0;
     rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
     leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
-    right.updateSpeeds(rightAngularSpeed)
+    right.updateSpeeds(rightAngularSpeed);
     left.updateSpeeds(leftAngularSpeed);
     double rightAverageSpeed = right.averageSpeed();
     double leftAverageSpeed = left.averageSpeed();
 
-    //delayMicroseconds(500);
-    //as5600_0.detectMagnet();
-    if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, rightAverageSpeed, dt);
-    if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, leftAverageSpeed, dt);
+    // if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, rightAverageSpeed, dt);
+    // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, leftAverageSpeed, dt);
     lineSensingCorrection();
     right.setSpeed((rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d) * BRAKE_OFF);
+    double oglss = leftSpeedSetpoint;
+    if (leftSpeedSetpoint < 0) leftSpeedSetpoint -= 200;
     left.setSpeed((leftSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d) * BRAKE_OFF);
+    leftSpeedSetpoint = oglss;
     //right.setSpeed(MAX_SPEED);
     //right.setSpeed(BASE_SPEED);
     //right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i);
-    Serial.print("Setpoint:");
-    Serial.print(BASE_SPEED);
-    Serial.print(",");
-    Serial.print("Right_Avg_Speed:");
-    Serial.print(rightAverageSpeed);
-    Serial.print(",");
-    Serial.print("Left_Avg_Speed:");
-    Serial.println(leftAverageSpeed);
+    // Serial.print("Setpoint:");
+    // Serial.print(BASE_SPEED);
     // Serial.print(",");
-    // Serial.print("P:");
-    // Serial.print(leftSpeedError.p);
+    // Serial.print("Right_Avg_Speed:");
+    // Serial.print(rightAverageSpeed);
     // Serial.print(",");
-    // Serial.print("I:");
-    // Serial.print(leftSpeedError.i);
+    // Serial.print("Left_Avg_Speed:");
+    // Serial.println(leftAverageSpeed);
+    // Serial.print(",");
+    // Serial.print("Right_Angle:");
+    // Serial.print(as5600_0.readAngle());
+    // Serial.print(",");
+    // Serial.print("Left_Angle:");
+    // Serial.println(as5600_1.readAngle());
     // Serial.print(",");
     // Serial.print("D:");
     // Serial.println(leftSpeedError.d);
