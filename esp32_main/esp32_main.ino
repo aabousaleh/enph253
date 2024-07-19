@@ -27,8 +27,8 @@ AS5600 as5600_0(&Wire);
 AS5600 as5600_1(&Wire1);
 
 const int MAX_SPEED = 2200;
-int BASE_SPEED = -1000;
-double STEERING_CONSTANT = 0.4 * BASE_SPEED;
+int BASE_SPEED = 950;
+double STEERING_CONSTANT = 0.35 * BASE_SPEED;
 double TURNING_CONSTANT = 0.10 * BASE_SPEED;
 
 double dt = PID_LOOP_INTERVAL / 1000.0; //in s
@@ -40,6 +40,8 @@ double lastAngle_0 = 0;
 double lastAngle_1 = 0;
 
 Map m;
+
+bool BRAKE_OFF = true; //turns off motors when false
 
 volatile double rightSpeedSetpoint = 0; //in degrees/sec
 Error rightSpeedError(MAX_SPEED*2);
@@ -59,10 +61,6 @@ double GAIN_P = 0.45;
 double GAIN_I = 0.35;
 double GAIN_D = 0.001;
 
-double speedsRight[5] = {0,0,0,0,0}; //0 is new, 4 is old
-double speedsLeft[5] = {0,0,0,0,0};
-
-char curChar = 'P';
 
 void setup()
 {
@@ -127,7 +125,6 @@ void setup()
 bool startTimer = true;
 unsigned long timerStart1 = 0;
 bool endTimer = true;
-bool BRAKE_OFF = true;
 
 void loop() {
   timeStart = millis();
@@ -158,7 +155,7 @@ void loop() {
       // If the input format is incorrect
       Serial.println("Invalid input format. Please enter 'P I D'.");
     }
-  }// 
+  }
   if (timeStart - lastTime > PID_LOOP_INTERVAL) {
     if (startTimer) {
       timerStart1 = millis();
@@ -167,10 +164,12 @@ void loop() {
     }
     if (millis() - timerStart1 > 2 * 1000 && endTimer == false) {
       equalSpeedSet(0);
-      BRAKE_OFF = false;
-      delay(500);
-      BRAKE_OFF = true;
+      BRAKE_OFF = 0;
+      brake();
+      delay(1000);
+      BRAKE_OFF = 1;
       BASE_SPEED = -BASE_SPEED;
+      m.flipDrivingDirection();
       equalSpeedSet(BASE_SPEED);
       endTimer = true;
       startTimer = true;
@@ -178,18 +177,18 @@ void loop() {
     dt = (timeStart - lastTime)/1000.0;
     rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
     leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
-    //lineSensingCorrection();
-    updateSpeeds(rightAngularSpeed, speedsRight);
-    updateSpeeds(leftAngularSpeed, speedsLeft);
-    double rightAverageSpeed = averageSpeed(speedsRight);
-    double leftAverageSpeed = averageSpeed(speedsLeft);
+    right.updateSpeeds(rightAngularSpeed)
+    left.updateSpeeds(leftAngularSpeed);
+    double rightAverageSpeed = right.averageSpeed();
+    double leftAverageSpeed = left.averageSpeed();
 
     //delayMicroseconds(500);
     //as5600_0.detectMagnet();
     if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, rightAverageSpeed, dt);
     if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, leftAverageSpeed, dt);
-    right.setSpeed(rightSpeedSetpoint + (GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d) * BRAKE_OFF);
-    left.setSpeed(leftSpeedSetpoint + (GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d) * BRAKE_OFF);
+    lineSensingCorrection();
+    right.setSpeed((rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d) * BRAKE_OFF);
+    left.setSpeed((leftSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d) * BRAKE_OFF);
     //right.setSpeed(MAX_SPEED);
     //right.setSpeed(BASE_SPEED);
     //right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i);
@@ -213,7 +212,7 @@ void loop() {
     
     lastTime = timeStart;
   } else {
-    dt = 0.01;
+    dt = PID_LOOP_INTERVAL / 1000.0;
   }
   //Serial.println(millis()-timeStart);
   //if (timeStart - lastTime2 > 20) {
@@ -231,11 +230,6 @@ void loop() {
   // }
   
     // timer.tick();
-  // if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_0), dt);
-  // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * getAngularSpeed(&as5600_1), dt);
-  // right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
-  // left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
-
   // if (as5600_0.detectMagnet()) rightPositionError.updateError(30.0, as5600_0.readAngle()/4096.0 * 360/* * WHEEL_RADIUS / 360.0 */, dt);
   // right.setSpeed(GAIN_P*rightPositionError.p + GAIN_D*rightPositionError.d);
 
@@ -290,30 +284,8 @@ void loop() {
   //Serial.println(millis() - timeStart);
 }
 
-void updateSpeeds(double newSpeed, double speeds[]) {
-  speeds[4] = speeds[3];
-  speeds[3] = speeds[2];
-  speeds[2] = speeds[1];
-  speeds[1] = speeds[0];
-  speeds[0] = newSpeed;
-}
-
-double averageSpeed(double speeds[]) {
-  double firstAverage = (speeds[0] + speeds[1] + speeds[2] + speeds[3] + speeds[4]) / 5;
-  int outliers = 0;
-  double newAverage = firstAverage;
-  for (int i = 0; i < 5; i++) {
-    if (abs(firstAverage - speeds[i])/ firstAverage > 0.3) {
-      outliers++;
-      if (outliers == 5) break;
-      newAverage = ((newAverage * (6.0 - outliers)) - speeds[i]) / (5.0 - outliers);
-    }
-  }
-  return newAverage;
-}
-
 void updateEncoderPosition(Map *m, AS5600 *a0, AS5600 *a1) {
-  position += m->getMovingDirection() * (getAngularSpeed(a0, 0) + getAngularSpeed(a1, 1))/2 * dt * WHEEL_RADIUS; //dt here is update rate (period)
+  position += m->getMovingDirection() * (right.currentAverageSpeed + left.currentAverageSpeed)/2 * dt * WHEEL_RADIUS; //dt here is update rate (period)
 }
 
 
@@ -321,10 +293,7 @@ void updateEncoderPosition(Map *m, AS5600 *a0, AS5600 *a1) {
 //positive for forward rotation, negative for backward rotation
 float getAngularSpeed(AS5600 *a, int encoderNum) {
   if (!a->detectMagnet()) return 0;
-  //long now = millis();
-  //float angleStart = a->readAngle()/4096.0 * 360; //in degrees
-  //delayMicroseconds(250);
-  float angleEnd = a->readAngle()/4096.0 * 360; //TROUBLESOME LINE: DESPITE FOLLOWING ADDRESS, CAUSES CHANGES IN OTHER ENCODER READING
+  float angleEnd = a->readAngle()/4096.0 * 360;
   float deltaA = 0;
   if (encoderNum == 0) {
     deltaA = angleEnd - lastAngle_0;
@@ -335,9 +304,8 @@ float getAngularSpeed(AS5600 *a, int encoderNum) {
     lastAngle_1 = angleEnd;
   }
 
-  if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360; //fix for when it goes from 0 -> 360 or vice versa
+  if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360; //this is a fix for when it goes from 0 -> 360 or vice versa
   float speed = deltaA / dt;
-  //Serial.println(deltaA);
 
   return speed;
 }

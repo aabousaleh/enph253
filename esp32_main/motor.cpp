@@ -5,6 +5,7 @@ Motor::Motor(int _pinA, int _pinB, float _maxSpeed){
   pinA = _pinA;
   pinB = _pinB;
   maxSpeed = _maxSpeed;
+  currentAverageSpeed = 0;
 
   pinMode(pinA, OUTPUT);
   pinMode(pinB, OUTPUT);
@@ -29,3 +30,26 @@ void Motor::setSpeed(float speed) {
     ledcWrite(pinB, -pwm);
   }
 };
+
+void Motor::updateSpeeds(double newSpeed) {
+  speeds[4] = speeds[3];
+  speeds[3] = speeds[2];
+  speeds[2] = speeds[1];
+  speeds[1] = speeds[0];
+  speeds[0] = newSpeed;
+}
+
+double Motor::averageSpeed() {
+  double firstAverage = (speeds[0] + speeds[1] + speeds[2] + speeds[3] + speeds[4]) / 5;
+  int outliers = 0;
+  double newAverage = firstAverage;
+  for (int i = 0; i < 5; i++) {
+    if (abs(firstAverage - speeds[i])/ firstAverage > 0.3) {
+      outliers++;
+      if (outliers == 5) break;
+      newAverage = ((newAverage * (6.0 - outliers)) - speeds[i]) / (5.0 - outliers);
+    }
+  }
+  currentAverageSpeed = newAverage;
+  return newAverage;
+}
