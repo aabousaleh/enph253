@@ -193,10 +193,10 @@ void loop() {
     // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, leftAverageSpeed, dt);
     lineSensingCorrection();
     right.setSpeed((rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d) * BRAKE_OFF);
-    double oglss = leftSpeedSetpoint;
+    //double oglss = leftSpeedSetpoint;
     if (leftSpeedSetpoint < 0) leftSpeedSetpoint -= 200;
     left.setSpeed((leftSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d) * BRAKE_OFF);
-    leftSpeedSetpoint = oglss;
+    //leftSpeedSetpoint = oglss;
     //right.setSpeed(MAX_SPEED);
     //right.setSpeed(BASE_SPEED);
     //right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i);
@@ -292,8 +292,8 @@ void loop() {
   //Serial.println(millis() - timeStart);
 }
 
-void updateEncoderPosition(Map *m, AS5600 *a0, AS5600 *a1) {
-  position += m->getMovingDirection() * (right.currentAverageSpeed + left.currentAverageSpeed)/2 * dt * WHEEL_RADIUS; //dt here is update rate (period)
+void updateEncoderPosition() {
+  position += m.getMovingDirection() * (right.currentAverageSpeed + left.currentAverageSpeed)/720.0` * dt * WHEEL_RADIUS; //dt here is update rate (period)
 }
 
 
