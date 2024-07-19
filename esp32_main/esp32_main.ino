@@ -26,8 +26,8 @@ AS5600 as5600_0(&Wire);
 //initialize i2c bus for left encoder
 AS5600 as5600_1(&Wire1);
 
-const int MAX_SPEED = 2400;
-int BASE_SPEED = 2000;
+const int MAX_SPEED = 2200;
+int BASE_SPEED = -1000;
 double STEERING_CONSTANT = 0.4 * BASE_SPEED;
 double TURNING_CONSTANT = 0.10 * BASE_SPEED;
 
@@ -42,22 +42,27 @@ double lastAngle_1 = 0;
 Map m;
 
 volatile double rightSpeedSetpoint = 0; //in degrees/sec
-Error rightSpeedError;
-Error rightPositionError;
+Error rightSpeedError(MAX_SPEED*2);
+Error rightPositionError(4096);
 Motor right(PWM_RIGHT_1, PWM_RIGHT_2, MAX_SPEED);
 double rightAngularSpeed;
 
 volatile double leftSpeedSetpoint = 0;
-Error leftSpeedError;
-Error leftPositionError;
+Error leftSpeedError(MAX_SPEED*2);
+Error leftPositionError(4096);
 Motor left(PWM_LEFT_1, PWM_LEFT_2, MAX_SPEED);
 double leftAngularSpeed;
 
 volatile double position = 0;
 
-double GAIN_P = 0;
+double GAIN_P = 0.45;
+double GAIN_I = 0.35;
+double GAIN_D = 0.001;
 
-double speeds[5] = {0,0,0,0,0}; //0 is new, 4 is old
+double speedsRight[5] = {0,0,0,0,0}; //0 is new, 4 is old
+double speedsLeft[5] = {0,0,0,0,0};
+
+char curChar = 'P';
 
 void setup()
 {
@@ -119,34 +124,98 @@ void setup()
 
 }
 
+bool startTimer = true;
+unsigned long timerStart1 = 0;
+bool endTimer = true;
+bool BRAKE_OFF = true;
 
 void loop() {
   timeStart = millis();
   if (Serial.available() > 0){
-    BASE_SPEED = Serial.parseInt();
-    equalSpeedSet(BASE_SPEED);
-  }// GAIN_P = Serial.parseFloat();
+    // char c = Serial.read();
+    // switch (c) {
+    //   case 'P':
+
+    // }
+    // GAIN_P = Serial.parseFloat();
+    // Read the incoming byte (assuming the data format is 'P I D')
+    String input = Serial.readStringUntil('\n');
+    // Split the input string into three parts (P, I, D)
+    int spaceIndex1 = input.indexOf(' ');
+    int spaceIndex2 = input.lastIndexOf(' ');
+    if (spaceIndex1 != -1 && spaceIndex2 != -1 && spaceIndex1 != spaceIndex2) {
+      // Extract P, I, D from the input string
+      String strP = input.substring(0, spaceIndex1);
+      String strI = input.substring(spaceIndex1 + 1, spaceIndex2);
+      String strD = input.substring(spaceIndex2 + 1);
+      
+      // Convert strings to doubles
+      GAIN_P = strP.toDouble();
+      GAIN_I = strI.toDouble();
+      GAIN_D = strD.toDouble();
+    }
+    else {
+      // If the input format is incorrect
+      Serial.println("Invalid input format. Please enter 'P I D'.");
+    }
+  }// 
   if (timeStart - lastTime > PID_LOOP_INTERVAL) {
+    if (startTimer) {
+      timerStart1 = millis();
+      startTimer = false;
+      endTimer = false;
+    }
+    if (millis() - timerStart1 > 2 * 1000 && endTimer == false) {
+      equalSpeedSet(0);
+      BRAKE_OFF = false;
+      delay(500);
+      BRAKE_OFF = true;
+      BASE_SPEED = -BASE_SPEED;
+      equalSpeedSet(BASE_SPEED);
+      endTimer = true;
+      startTimer = true;
+    }
+    dt = (timeStart - lastTime)/1000.0;
     rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
     leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
     //lineSensingCorrection();
-    updateSpeeds(rightAngularSpeed);
+    updateSpeeds(rightAngularSpeed, speedsRight);
+    updateSpeeds(leftAngularSpeed, speedsLeft);
+    double rightAverageSpeed = averageSpeed(speedsRight);
+    double leftAverageSpeed = averageSpeed(speedsLeft);
 
+    //delayMicroseconds(500);
     //as5600_0.detectMagnet();
-    if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, 1.0 * rightAngularSpeed, dt);
-    if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, 1.0 * leftAngularSpeed, dt);
-    right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d);
-    left.setSpeed(rightSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d);
+    if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, rightAverageSpeed, dt);
+    if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, leftAverageSpeed, dt);
+    right.setSpeed(rightSpeedSetpoint + (GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d) * BRAKE_OFF);
+    left.setSpeed(leftSpeedSetpoint + (GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d) * BRAKE_OFF);
     //right.setSpeed(MAX_SPEED);
     //right.setSpeed(BASE_SPEED);
+    //right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i);
     Serial.print("Setpoint:");
     Serial.print(BASE_SPEED);
     Serial.print(",");
     Serial.print("Right_Avg_Speed:");
-    Serial.println(averageSpeed());
+    Serial.print(rightAverageSpeed);
+    Serial.print(",");
+    Serial.print("Left_Avg_Speed:");
+    Serial.println(leftAverageSpeed);
+    // Serial.print(",");
+    // Serial.print("P:");
+    // Serial.print(leftSpeedError.p);
+    // Serial.print(",");
+    // Serial.print("I:");
+    // Serial.print(leftSpeedError.i);
+    // Serial.print(",");
+    // Serial.print("D:");
+    // Serial.println(leftSpeedError.d);
     
     lastTime = timeStart;
+  } else {
+    dt = 0.01;
   }
+  //Serial.println(millis()-timeStart);
   //if (timeStart - lastTime2 > 20) {
     
   //   lastTime2 = timeStart;
@@ -214,12 +283,14 @@ void loop() {
 
   //   RemoteClient.println(BASE_SPEED);
   // }
-  delay(2);
+  delay(1);
   //timeEnd = millis();
   //if (timeEnd - timeStart < dt*1000 - 2) delay(dt*1000 - 2 - (timeEnd - timeStart));
+  //Serial.print("Full loop: ");
+  //Serial.println(millis() - timeStart);
 }
 
-void updateSpeeds(double newSpeed) {
+void updateSpeeds(double newSpeed, double speeds[]) {
   speeds[4] = speeds[3];
   speeds[3] = speeds[2];
   speeds[2] = speeds[1];
@@ -227,13 +298,14 @@ void updateSpeeds(double newSpeed) {
   speeds[0] = newSpeed;
 }
 
-double averageSpeed() {
+double averageSpeed(double speeds[]) {
   double firstAverage = (speeds[0] + speeds[1] + speeds[2] + speeds[3] + speeds[4]) / 5;
   int outliers = 0;
   double newAverage = firstAverage;
   for (int i = 0; i < 5; i++) {
     if (abs(firstAverage - speeds[i])/ firstAverage > 0.3) {
       outliers++;
+      if (outliers == 5) break;
       newAverage = ((newAverage * (6.0 - outliers)) - speeds[i]) / (5.0 - outliers);
     }
   }

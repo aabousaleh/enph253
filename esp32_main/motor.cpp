@@ -20,7 +20,7 @@ Motor::Motor(int _pinA, int _pinB, float _maxSpeed){
 };
 
 void Motor::setSpeed(float speed) {
-  int pwm = (speed < maxSpeed) ? (speed / maxSpeed) * 255.0 : 255;
+  int pwm = (abs(speed) < maxSpeed) ? (speed / maxSpeed) * 255.0 : 255 * speed / abs(speed);
   if (pwm >= 0) {
     ledcWrite(pinB, 0);
     ledcWrite(pinA, pwm);

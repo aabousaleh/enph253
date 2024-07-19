@@ -56,7 +56,4 @@ enum State {
 //wheel radius in m
 #define WHEEL_RADIUS 0.0335
 
-#define GAIN_I 0
-#define GAIN_D 0
-
 #endif
