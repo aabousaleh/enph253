@@ -29,7 +29,7 @@ AS5600 as5600_1(&Wire1);
 const int MAX_SPEED = 2200;
 int BASE_SPEED = 600;
 double STEERING_CONSTANT = 0.065 * MAX_SPEED;
-double TURNING_CONSTANT = 0.125 * MAX_SPEED;
+double TURNING_CONSTANT = 0.1 * MAX_SPEED;
 
 double dt = PID_LOOP_INTERVAL / 1000.0; //in s
 unsigned long timeStart = 0;
@@ -60,6 +60,8 @@ volatile double position = 5.75;
 double GAIN_P = 0.45;
 double GAIN_I = 0.35;
 double GAIN_D = 0.001;
+
+int LAST_TURN = 0;
 
 
 void setup()
@@ -126,6 +128,8 @@ bool startTimer = true;
 unsigned long timerStart1 = 0;
 bool endTimer = true;
 
+double intendedPosition = COOKTOP;
+
 void loop() {
   timeStart = millis();
   if (Serial.available() > 0){
@@ -157,12 +161,20 @@ void loop() {
     }
   }
   if (timeStart - lastTime > PID_LOOP_INTERVAL) {
-    if (abs(COOKTOP - position) > 0.5) {
-      BASE_SPEED = 600 * sign(COOKTOP - position);
+    if (abs(intendedPosition - position) > 0.5) {
+      BASE_SPEED = 600 * sign(intendedPosition - position);
       equalSpeedSet(BASE_SPEED);
     } else {
-      brake();
-      BRAKE_OFF = false;
+      if (intendedPosition == PATTIES) {
+        brake();
+        BRAKE_OFF = false;
+      } else {
+        intendedPosition = PATTIES;
+        brake();
+        delay(1000);
+        BASE_SPEED = 600 * sign(intendedPosition - position);
+      equalSpeedSet(BASE_SPEED);
+      }
     }
     dt = (timeStart - lastTime)/1000.0;
     rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
@@ -175,26 +187,26 @@ void loop() {
     // if (as5600_0.detectMagnet()) rightSpeedError.updateError(rightSpeedSetpoint, rightAverageSpeed, dt);
     // if (as5600_1.detectMagnet()) leftSpeedError.updateError(leftSpeedSetpoint, leftAverageSpeed, dt);
     lineSensingCorrection();
-    right.setSpeed((rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i + GAIN_D*rightSpeedError.d) * BRAKE_OFF);
+    right.setSpeed(rightSpeedSetpoint * BRAKE_OFF);
     //double oglss = leftSpeedSetpoint;
-    if (leftSpeedSetpoint < 0) leftSpeedSetpoint -= 200;
-    left.setSpeed((leftSpeedSetpoint + GAIN_P*leftSpeedError.p + GAIN_I*leftSpeedError.i + GAIN_D*leftSpeedError.d) * BRAKE_OFF);
+    //if (leftSpeedSetpoint < 0) leftSpeedSetpoint -= 200;
+    left.setSpeed((leftSpeedSetpoint) * BRAKE_OFF);
     updateEncoderPosition();
     //leftSpeedSetpoint = oglss;
     //right.setSpeed(MAX_SPEED);
     //right.setSpeed(BASE_SPEED);
     //right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i);
-    Serial.print("Setpoint:");
-    Serial.print(COOKTOP);
-    Serial.print(",");
-    Serial.print("Right_Avg_Speed:");
-    Serial.print(rightAverageSpeed);
-    Serial.print(",");
-    Serial.print("Left_Avg_Speed:");
-    Serial.print(leftAverageSpeed);
-    Serial.print(",");
-    Serial.print("Position:");
-    Serial.println(position);
+    // Serial.print("Setpoint:");
+    // Serial.print(COOKTOP);
+    // Serial.print(",");
+    // Serial.print("Right_Avg_Speed:");
+    // Serial.print(rightAverageSpeed);
+    // Serial.print(",");
+    // Serial.print("Left_Avg_Speed:");
+    // Serial.print(leftAverageSpeed);
+    // Serial.print(",");
+    // Serial.print("Position:");
+    // Serial.println(position);
     // Serial.print(",");
     // Serial.print("Left_Angle:");
     // Serial.println(as5600_1.readAngle());
@@ -277,7 +289,7 @@ void loop() {
 }
 
 void updateEncoderPosition() {
-  position += sign(BASE_SPEED) * (right.currentAverageSpeed + left.currentAverageSpeed)/720.0 * dt * WHEEL_RADIUS * 6.28; //dt here is update rate (period)
+  position += (right.currentAverageSpeed + left.currentAverageSpeed)/720.0 * dt * WHEEL_RADIUS * 6.28; //dt here is update rate (period)
 }
 
 
@@ -313,31 +325,61 @@ void lineSensingCorrection() {
   double br = analogRead(BR_TCRT);
   double bl = analogRead(BL_TCRT);
 
+  // Serial.println(fr);
+  // Serial.println(fl);
+  // Serial.println(br);
+  // Serial.println(bl);
+
+  Serial.print("Frontright:");
+  Serial.print(fr);
+  Serial.print(",");
+  Serial.print("Frontleft:");
+  Serial.print(fl);
+  Serial.print(",");
+  Serial.print("Backright:");
+  Serial.print(br);
+  Serial.print(",");
+  Serial.print("Backleft:");
+  Serial.println(bl);
+
   int front_correction = (fr - fl);
   int back_correction = (bl - br);
 
+  bool OFF_THE_LINE = false;
+
+  //1 means right, -1 means left, 0 means straight
   if (BASE_SPEED != 0) {
     if (m.getDrivingDirection() == 1 && BASE_SPEED > 0) {
-      if (front_correction > 0) {
+      if (fr < 4000 && fl < 4000) OFF_THE_LINE = true;
+      if (front_correction > 0 || (OFF_THE_LINE && (LAST_TURN == 1))) {
+        if (!OFF_THE_LINE) LAST_TURN = 1;
         rightSpeedSetpoint = BASE_SPEED - STEERING_CONSTANT;
         leftSpeedSetpoint = BASE_SPEED;
       }
-      else if (front_correction < 0) {
+      else if (front_correction < 0 || (OFF_THE_LINE && (LAST_TURN == -1))) {
+        if (!OFF_THE_LINE) LAST_TURN = -1;
         leftSpeedSetpoint =  BASE_SPEED - STEERING_CONSTANT;
         rightSpeedSetpoint = BASE_SPEED;
       } else {
+        LAST_TURN = 0;
+        OFF_THE_LINE = false;
         leftSpeedSetpoint = BASE_SPEED;
         rightSpeedSetpoint = BASE_SPEED;
       }
     } else {
-      if (back_correction > 0) {
-        leftSpeedSetpoint = BASE_SPEED + STEERING_CONSTANT;
+      if (br < 4000 && bl < 4000) OFF_THE_LINE = true;
+      if (back_correction > 0 || (OFF_THE_LINE && (LAST_TURN == -1))) {
+        if (!OFF_THE_LINE) LAST_TURN = -1;
+        leftSpeedSetpoint = BASE_SPEED + STEERING_CONSTANT*2;
         rightSpeedSetpoint = BASE_SPEED;
       }
-      else if (back_correction < 0) {
-        rightSpeedSetpoint = BASE_SPEED + STEERING_CONSTANT;
+      else if (back_correction < 0 || (OFF_THE_LINE && (LAST_TURN == 1))) {
+        if (!OFF_THE_LINE) LAST_TURN = 1;
+        rightSpeedSetpoint = BASE_SPEED + STEERING_CONSTANT*2;
         leftSpeedSetpoint = BASE_SPEED;
       } else {
+        LAST_TURN = 0;
+        OFF_THE_LINE = false;
         leftSpeedSetpoint = BASE_SPEED;
         rightSpeedSetpoint = BASE_SPEED;
       }
@@ -346,6 +388,9 @@ void lineSensingCorrection() {
     rightSpeedSetpoint = 0;
     leftSpeedSetpoint = 0;
   }
+
+  Serial.println(OFF_THE_LINE);
+  Serial.println(LAST_TURN);
 }
 
 void equalSpeedSet(double speed) {
@@ -359,12 +404,17 @@ void move() {
 }
 
 void brake() {
-  // equalSpeedSet(-BASE_SPEED / 3.0);
-  // right.setSpeed(rightSpeedSetpoint);
-  // left.setSpeed(0);
-  // delay(25);
+  if (BRAKE_OFF) {
+    equalSpeedSet(-BASE_SPEED / 3.0);
+    right.setSpeed(rightSpeedSetpoint);
+  //if (BASE_SPEED > 0) leftSpeedSetpoint = -2250;
+    left.setSpeed(leftSpeedSetpoint);
+    delay(25);
+  }
   right.setSpeed(0); 
   left.setSpeed(0);
+  right.clearSpeeds();
+  left.clearSpeeds();
 }
 
 //dir: 1 CW, -1 CCW

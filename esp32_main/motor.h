@@ -19,6 +19,7 @@ class Motor{
     void setSpeed(float speed);
     void updateSpeeds(double speed);
     double averageSpeed();
+    void clearSpeeds();
 
 };
 

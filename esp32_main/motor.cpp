@@ -52,4 +52,12 @@ double Motor::averageSpeed() {
   }
   currentAverageSpeed = newAverage;
   return newAverage;
+};
+
+void Motor::clearSpeeds() {
+  speeds[4] = 0;
+  speeds[3] = 0;
+  speeds[2] = 0;
+  speeds[1] = 0;
+  speeds[0] = 0;
 }
