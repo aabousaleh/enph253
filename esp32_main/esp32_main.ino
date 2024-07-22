@@ -170,10 +170,11 @@ void loop() {
         BRAKE_OFF = false;
       } else {
         intendedPosition = PATTIES;
+        //BRAKE_OFF = false;
         brake();
         delay(1000);
         BASE_SPEED = 600 * sign(intendedPosition - position);
-      equalSpeedSet(BASE_SPEED);
+        equalSpeedSet(BASE_SPEED);
       }
     }
     dt = (timeStart - lastTime)/1000.0;
@@ -370,12 +371,12 @@ void lineSensingCorrection() {
       if (br < 4000 && bl < 4000) OFF_THE_LINE = true;
       if (back_correction > 0 || (OFF_THE_LINE && (LAST_TURN == -1))) {
         if (!OFF_THE_LINE) LAST_TURN = -1;
-        leftSpeedSetpoint = BASE_SPEED + STEERING_CONSTANT*2;
+        leftSpeedSetpoint = BASE_SPEED + STEERING_CONSTANT*2.5;
         rightSpeedSetpoint = BASE_SPEED;
       }
       else if (back_correction < 0 || (OFF_THE_LINE && (LAST_TURN == 1))) {
         if (!OFF_THE_LINE) LAST_TURN = 1;
-        rightSpeedSetpoint = BASE_SPEED + STEERING_CONSTANT*2;
+        rightSpeedSetpoint = BASE_SPEED + STEERING_CONSTANT*2.5;
         leftSpeedSetpoint = BASE_SPEED;
       } else {
         LAST_TURN = 0;
