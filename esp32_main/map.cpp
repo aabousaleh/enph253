@@ -1,7 +1,7 @@
 #include "map.h"
 
 Map::Map() {
-  location = 0;
+  // location = 0;
   facingDirection = 1;
   drivingDirection = 1;
   locationIndex = 0;
@@ -21,9 +21,9 @@ int Map::getMovingDirection() {
   return facingDirection * drivingDirection;
 };
 
-int Map::getLocation() {
-  return location;
-};
+// int Map::getLocation() {
+//   return location;
+// };
 
 State Map::getState() {
   return state;
@@ -37,14 +37,22 @@ void Map::flipDrivingDirection() {
   drivingDirection *= -1;
 };
 
-void IRAM_ATTR Map::updateLocationRight() {
-  if (facingDirection == (1 - ROBOT_ID*2)) { // 1 - 0*2 = 1, 1 - 1*2 = -1
-    location += drivingDirection;
-  }
-};
+Instruction Map::getNextInstruction() {
+  return instructions[instructionIndex];
+}
 
-void IRAM_ATTR Map::updateLocationLeft() {
-  if (facingDirection == (-1 + ROBOT_ID*2)) {
-    location -= drivingDirection;
-  }
-};
+double Map::getNextLocation() {
+  return locations[locationIndex];
+}
+
+// void IRAM_ATTR Map::updateLocationRight() {
+//   if (facingDirection == (1 - ROBOT_ID*2)) { // 1 - 0*2 = 1, 1 - 1*2 = -1
+//     location += drivingDirection;
+//   }
+// };
+
+// void IRAM_ATTR Map::updateLocationLeft() {
+//   if (facingDirection == (-1 + ROBOT_ID*2)) {
+//     location -= drivingDirection;
+//   }
+// };

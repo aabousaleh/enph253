@@ -28,14 +28,15 @@ enum State {
   ADJUST,
   SPIN,
   ARM,
-  WAIT
+  WAITING
 };
 
 enum Instruction {
   GO,
   GRAB,
   PLACE,
-  TURN
+  TURN,
+  WAIT
 };
 
 #define PID_LOOP_INTERVAL 10 //in millis
