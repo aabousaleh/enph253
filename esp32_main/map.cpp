@@ -4,6 +4,8 @@ Map::Map() {
   location = 0;
   facingDirection = 1;
   drivingDirection = 1;
+  locationIndex = 0;
+  instructionIndex = 0;
 };
 
 int Map::getFacingDirection() {

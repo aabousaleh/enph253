@@ -19,10 +19,18 @@ class Map{
     void IRAM_ATTR updateLocationLeft(); //when left tape sensor detect tape
     int location;
     State state;
+    Instruction getNextInstruction();
+    double getNextLocation();
+
 
   protected:
     int facingDirection;
     int drivingDirection;
+    Instruction instructions[] = {GO, GO};
+    int instructionIndex;
+    double locations[] = {COOKTOP, BUNS};
+    int locationIndex;
+
     //int stateIndex; //variable to keep track of the current state of the robot
     //String states[5] = {"Speeding", "Adjusting", "Spinning", "Arming", "Waiting"}; //adjust size as you add states
 

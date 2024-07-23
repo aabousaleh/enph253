@@ -24,11 +24,18 @@ const double SERVING_AREA = 48;
 const double LETTUCE = 90;
 
 enum State {
-  SPEED,
+  MOVE,
   ADJUST,
   SPIN,
   ARM,
   WAIT
+};
+
+enum Instruction {
+  GO,
+  GRAB,
+  PLACE,
+  TURN
 };
 
 #define PID_LOOP_INTERVAL 10 //in millis

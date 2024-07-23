@@ -128,7 +128,7 @@ bool startTimer = true;
 unsigned long timerStart1 = 0;
 bool endTimer = true;
 
-double intendedPosition = COOKTOP;
+double intendedPosition = BUNS;
 
 void loop() {
   timeStart = millis();
@@ -161,13 +161,19 @@ void loop() {
     }
   }
   if (timeStart - lastTime > PID_LOOP_INTERVAL) {
-    if (abs(intendedPosition - position) > 0.5) {
+    dt = (timeStart - lastTime)/1000.0;
+    if (abs(intendedPosition - position) > 0.3) {
       BASE_SPEED = 600 * sign(intendedPosition - position);
       equalSpeedSet(BASE_SPEED);
     } else {
       if (intendedPosition == PATTIES) {
         brake();
-        BRAKE_OFF = false;
+        // BRAKE_OFF = false;
+        delay(5000);
+        intendedPosition = BUNS;
+        position = PATTIES;
+        BASE_SPEED = 600 * sign(intendedPosition - position);
+        equalSpeedSet(BASE_SPEED);
       } else {
         intendedPosition = PATTIES;
         //BRAKE_OFF = false;
@@ -177,7 +183,6 @@ void loop() {
         equalSpeedSet(BASE_SPEED);
       }
     }
-    dt = (timeStart - lastTime)/1000.0;
     rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
     leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
     right.updateSpeeds(rightAngularSpeed);
@@ -197,17 +202,17 @@ void loop() {
     //right.setSpeed(MAX_SPEED);
     //right.setSpeed(BASE_SPEED);
     //right.setSpeed(rightSpeedSetpoint + GAIN_P*rightSpeedError.p + GAIN_I*rightSpeedError.i);
-    // Serial.print("Setpoint:");
-    // Serial.print(COOKTOP);
-    // Serial.print(",");
-    // Serial.print("Right_Avg_Speed:");
-    // Serial.print(rightAverageSpeed);
-    // Serial.print(",");
-    // Serial.print("Left_Avg_Speed:");
-    // Serial.print(leftAverageSpeed);
-    // Serial.print(",");
-    // Serial.print("Position:");
-    // Serial.println(position);
+    Serial.print("Setpoint:");
+    Serial.print(intendedPosition);
+    Serial.print(",");
+    Serial.print("Right_Avg_Speed:");
+    Serial.print(rightAverageSpeed);
+    Serial.print(",");
+    Serial.print("Left_Avg_Speed:");
+    Serial.print(leftAverageSpeed);
+    Serial.print(",");
+    Serial.print("Position:");
+    Serial.println(position);
     // Serial.print(",");
     // Serial.print("Left_Angle:");
     // Serial.println(as5600_1.readAngle());
@@ -331,17 +336,17 @@ void lineSensingCorrection() {
   // Serial.println(br);
   // Serial.println(bl);
 
-  Serial.print("Frontright:");
-  Serial.print(fr);
-  Serial.print(",");
-  Serial.print("Frontleft:");
-  Serial.print(fl);
-  Serial.print(",");
-  Serial.print("Backright:");
-  Serial.print(br);
-  Serial.print(",");
-  Serial.print("Backleft:");
-  Serial.println(bl);
+  // Serial.print("Frontright:");
+  // Serial.print(fr);
+  // Serial.print(",");
+  // Serial.print("Frontleft:");
+  // Serial.print(fl);
+  // Serial.print(",");
+  // Serial.print("Backright:");
+  // Serial.print(br);
+  // Serial.print(",");
+  // Serial.print("Backleft:");
+  // Serial.println(bl);
 
   int front_correction = (fr - fl);
   int back_correction = (bl - br);
