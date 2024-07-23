@@ -21,6 +21,7 @@ class Map{
     State state;
     Instruction getNextInstruction();
     double getNextLocation();
+    void nextRecipe();
 
 
   protected:
@@ -28,8 +29,12 @@ class Map{
     int drivingDirection;
     int locationIndex;
     int instructionIndex;
-    Instruction instructions[22] = {GO, GRAB, TURN, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, WAIT, GRAB, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE};
-    double locations[7] = {BUNS, PLATES, PATTIES, COOKTOP, PLATES, BUNS, PLATES};
+    int recipeIndex;
+    Instruction *currentRecipeInstructions;
+    double *currentRecipeLocations;
+    Food recipes[2] = {BURGER, BURGER};
+    Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, WAIT, GRAB, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, END};
+    double burgerLocations[7] = {BUNS, PLATES, PATTIES, COOKTOP, PLATES, BUNS, PLATES};
 
 };
 #endif

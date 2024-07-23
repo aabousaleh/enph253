@@ -36,10 +36,17 @@ enum Instruction {
   GRAB,
   PLACE,
   TURN,
-  WAIT
+  WAIT,
+  END
 };
 
-#define PID_LOOP_INTERVAL 10 //in millis
+enum Food {
+  BURGER,
+  DELUX_BURGER,
+  SALAD
+};
+
+#define LOOP_INTERVAL 10 //in millis
 
 //right motor pwm pins
 #define PWM_RIGHT_1 26

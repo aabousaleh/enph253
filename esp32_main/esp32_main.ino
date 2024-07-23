@@ -18,25 +18,24 @@ const char* password = "KirbySucc";
 // WiFiServer server(80);
 // WiFiClient RemoteClient;
 
-// auto timer = timer_create_default();
-
 //initialize i2c bus for right encoder
 AS5600 as5600_0(&Wire);
 
 //initialize i2c bus for left encoder
 AS5600 as5600_1(&Wire1);
 
+//Speed constants
 const int MAX_SPEED = 2200;
 int BASE_SPEED = 600;
 double STEERING_SPEED = 0.065 * MAX_SPEED;
 double TURNING_SPEED = 0.1 * MAX_SPEED;
 double ADJUSTING_SPEED = 0.015 * MAX_SPEED;
+int TURNING_DELAY = 250;
 
-double dt = PID_LOOP_INTERVAL / 1000.0; //in s
-unsigned long timeStart = 0;
-unsigned long timeEnd = dt*1000; //convert to ms
-unsigned long lastTime = 0;
-unsigned long lastTime2 = 0;
+double dt = LOOP_INTERVAL / 1000.0; //in s
+unsigned long timeStart = 0; //for loop timing
+unsigned long timeEnd = dt*1000;
+unsigned long lastTime = 0; //for loop timing
 double lastAngle_0 = 0;
 double lastAngle_1 = 0;
 
@@ -65,6 +64,7 @@ double GAIN_D = 0.001;
 int LAST_TURN = 0;
 
 double intendedPosition;
+Instruction currentInstruction;
 
 void setup()
 {
@@ -124,6 +124,8 @@ void setup()
   lastAngle_0 = as5600_0.readAngle() / 4096.0 * 360;
   lastAngle_1 = as5600_1.readAngle() / 4096.0 * 360;
 
+  currentInstruction = m.getNextInstruction();
+
 }
 
 void loop() {
@@ -156,12 +158,19 @@ void loop() {
       Serial.println("Invalid input format. Please enter 'P I D'.");
     }
   }
-  if (timeStart - lastTime > PID_LOOP_INTERVAL) {
+  //TODO: alot
+  /*
+  1. Add interrupts for microswitches to freeze the robot
+  2. Communication
+  3. create log of recipe stack (to use for isReady)
+  4. figure out blocking
+  */
+  
+  //receive status from other robot
+  if (timeStart - lastTime > LOOP_INTERVAL) {
+    
     switch (m.state) {
       case MOVE: {
-        
-        //set speed according to distance from desired position
-        //interrupt on the destination station tape line: full brake + go to ADJUST
         double distance = intendedPosition - position;
         if (abs(distance) > 0.5) {
           BASE_SPEED = distance > 5 ? 1000 * sign(distance) : 200 * sign(distance);
@@ -177,17 +186,6 @@ void loop() {
           move();
           updateEncoderPosition();
 
-          Serial.print("Setpoint:");
-          Serial.print(intendedPosition);
-          Serial.print(",");
-          Serial.print("Right_Avg_Speed:");
-          Serial.print(rightAverageSpeed);
-          Serial.print(",");
-          Serial.print("Left_Avg_Speed:");
-          Serial.print(leftAverageSpeed);
-          Serial.print(",");
-          Serial.print("Position:");
-          Serial.println(position);
         } else {
           brake();
           delay(50);
@@ -198,45 +196,55 @@ void loop() {
         break;
       }
       case ADJUST: {
-        //roll backwards slowly until you find edge of tape
-        //move precisely one tape-width's distance further
-        //go to ARM
-
         int stationToRead = m.getFacingDirection() == 1 ? LS_TCRT : RS_TCRT;
 
         if (!digitalRead(stationToRead)) {
           equalSpeedSet(ADJUSTING_SPEED * sign(intendedPosition - position) * m.getFacingDirection());
+          //lineSensingCorrection();
           move();
-        } 
-        // else {
-        //   final = position +- TAPE_WIDTH / 2.0;
-        //   while (position != final) {
-        //     pid();
-        //   }
-          
-        // }
+          updateEncoderPosition();
+        } else {
+          double final = position + sign(rightSpeedSetpoint) * TAPE_WIDTH / 2.0;
+          while (position != final) {
+            equalSpeedSet(ADJUSTING_SPEED / 2.0 * sign(rightSpeedSetpoint) * m.getFacingDirection());
+            move();
+            updateEncoderPosition();
+          }
+          currentInstruction = m.getNextInstruction();
+          updateInstruction();
+        }
 
         break;
       }
       case SPIN: {
-
+        spin180(1);
+        currentInstruction = m.getNextInstruction();
+        updateInstruction();
         break;
       }
       case ARM: {
-        // if (isReady) { //isReady to check that the other robot completed their task
-        //   if (hasObject) { 
-        //     place();
-        //     hasObject = false;
-        //   } else {
-        //     grab();
-        //     hasObject = true;
-        //   }
-        // }
+        if (/*isReady*/ true) { //isReady to check that the other robot completed their task
+          if (currentInstruction == PLACE) {
+            //place();
+            if (abs(position - COOKTOP) < 1) {
+              //start timer
+              //broadcast it
+            }
+          } else if (currentInstruction == GRAB) {
+            //grab();
+            if (abs(position - COOKTOP) < 1) {
+              //stop timer
+              //broadcast it
+            }
+          }
+          //send status to other robot
+          currentInstruction = m.getNextInstruction();
+          updateInstruction();
+        }
 
-        //update state now? depends on recipe tho, figure that out gl bro
         break;
       }
-      case WAIT: {
+      case WAITING: {
 
         break;
       }
@@ -246,13 +254,47 @@ void loop() {
       }
     }
   } else {
-    dt = PID_LOOP_INTERVAL / 1000.0;
+    dt = LOOP_INTERVAL / 1000.0;
   }
   delay(1);
 }
 
 void updateEncoderPosition() {
   position += m.getFacingDirection() * (right.currentAverageSpeed + left.currentAverageSpeed)/720.0 * dt * WHEEL_RADIUS * 6.28; //dt here is update rate (period)
+}
+
+void updateInstruction() {
+  switch (currentInstruction) {
+    case GO: {
+      intendedPosition = m.getNextLocation();
+      m.state = MOVE;
+      break;
+    }
+    case GRAB: {
+      m.state = ARM;
+      break;
+    }
+    case PLACE: {
+      m.state = ARM;
+      break;
+    }
+    case TURN: {
+      m.state = SPIN;
+      break;
+    }
+    case WAIT: {
+      m.state = WAITING;
+      break;
+    }
+    case END: {
+      m.nextRecipe();
+      break;
+    }
+    default: {
+      //this should never happen
+      //if it does... die...?
+    }
+  }
 }
 
 
@@ -378,19 +420,17 @@ void brake() {
 }
 
 //dir: 1 CW, -1 CCW
-void turn180(int dir) {
-  if (dir == 1) {
+void spin180(int dir) {
+  if (dir == -1) {
     right.setSpeed(TURNING_SPEED);
     left.setSpeed(-TURNING_SPEED);
-    delay(1000); //change
+    delay(TURNING_DELAY); //change
     brake();
-    delay(1000);
-  } else if (dir == -1) {
+  } else if (dir == 1) {
     right.setSpeed(-TURNING_SPEED);
     left.setSpeed(TURNING_SPEED);
-    delay(1000);
+    delay(TURNING_DELAY);
     brake();
-    delay(1000);
   }
   m.flipFacingDirection();
 }
