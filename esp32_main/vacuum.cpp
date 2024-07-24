@@ -1,5 +1,4 @@
 #include "vacuum.h"
-#include "analogRead.h"
 
 Vacuum::Vacuum(int _ctrlPin, int _sensPin, int _valvePin) {
   ctrlPin = _ctrlPin;
@@ -28,8 +27,8 @@ bool Vacuum::objSecured() {
   bool pickedUp = false;
 
   //TODO: NEED TO BE CHANGED EXPERIMENTALLY
-  int LOWER_THRESHOLD = 400;
-  int HIGHER_THRESHOLD = 600;
+  const int LOWER_THRESHOLD = 400;
+  const int HIGHER_THRESHOLD = 600;
 
   //TODO: MIGHT NEED TO CHANGE THIS
   const int NUM_READINGS = 50;
@@ -53,9 +52,9 @@ bool Vacuum::objSecured() {
     currentReadings[index] = analogRead(sensPin);
     total += currentReadings[index];
 
-    if (index < NUM_READINGS) i++;
+    if (index < NUM_READINGS) index++;
     else {
-      i = 0;
+      index = 0;
       startCheck = true;
     }
 

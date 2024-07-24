@@ -13,6 +13,6 @@ class Vacuum {
 
   void setSucc(bool succ);
   bool objSecured();
-}
+};
 
 #endif
