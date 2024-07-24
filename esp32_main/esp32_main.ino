@@ -184,7 +184,7 @@ void loop() {
       case MOVE: {
         double distance = intendedPosition - position;
         if (abs(distance) > 0.15 && !stationInterrupt) {
-          BASE_SPEED = abs(distance) > 10 ? 240 * sign(distance) * m.getFacingDirection() : 100 * sign(distance);
+          BASE_SPEED = abs(distance) > 10 ? 240 * sign(distance) * m.getFacingDirection() : 100 * sign(distance) * m.getFacingDirection();
           equalSpeedSet(BASE_SPEED);
           // rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
           // leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
@@ -224,25 +224,26 @@ void loop() {
       case ADJUST: {
         int stationToRead = m.getFacingDirection() == 1 ? LS_TCRT : RS_TCRT;
 
-        if (!digitalRead(stationToRead)) {
-          equalSpeedSet(ADJUSTING_SPEED * sign(intendedPosition - position) * m.getFacingDirection());
-          //lineSensingCorrection();
-          move();
-          updateEncoderPosition();
-        } else {
-          // double final = position + sign(rightSpeedSetpoint) * TAPE_WIDTH / 2.0;
-          // while (position != final) {
-          //   equalSpeedSet(ADJUSTING_SPEED / 2.0 * sign(rightSpeedSetpoint) * m.getFacingDirection());
-          //   move();
-          //   updateEncoderPosition();
-          // }
-          // currentInstruction = m.getNextInstruction();
-          // updateInstruction();
+        // if (!digitalRead(stationToRead)) {
+        //   equalSpeedSet(ADJUSTING_SPEED * sign(intendedPosition - position) * m.getFacingDirection());
+        //   //lineSensingCorrection();
+        //   move();
+        //   updateEncoderPosition();
+        // } else {
+        //   // double final = position + sign(rightSpeedSetpoint) * TAPE_WIDTH / 2.0;
+        //   // while (position != final) {
+        //   //   equalSpeedSet(ADJUSTING_SPEED / 2.0 * sign(rightSpeedSetpoint) * m.getFacingDirection());
+        //   //   move();
+        //   //   updateEncoderPosition();
+        //   // }
+        //   // currentInstruction = m.getNextInstruction();
+        //   // updateInstruction();
           brake(false);
           delay(2000);
           currentInstruction = m.getNextInstruction();
           updateInstruction();
-        }
+        // }
+        //brake(false);
 
         break;
       }
@@ -330,6 +331,7 @@ void updateInstruction() {
       //TODO: fix this case
       // m.nextRecipe();
       DRIVING = false;
+      brake(false);
       m.state = WAITING;
       break;
     }
@@ -501,7 +503,7 @@ void spin180(int dir) {
 void spinBrake(int dir) {
   right.setSpeed(dir * TURNING_SPEED / 3.0);
   left.setSpeed(dir * -TURNING_SPEED / 2.0);
-  delay(10);
+  delay(7);
   right.setSpeed(0);
   left.setSpeed(0);
   right.clearSpeeds();
