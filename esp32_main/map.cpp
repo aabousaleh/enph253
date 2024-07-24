@@ -49,7 +49,7 @@ void Map::nextRecipe() {
   locationIndex = 0;
   switch (nextRecipe) {
     case BURGER: {
-      currentRecipeInstructions = burgerInstructions;
+      currentRecipeInstructions = burgerSansGrab;
       currentRecipeLocations = burgerLocations;
       break;
     }
