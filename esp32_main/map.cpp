@@ -7,8 +7,7 @@ Map::Map() {
   locationIndex = 0;
   instructionIndex = 0;
   recipeIndex = 0;
-  currentRecipeInstructions = burgerInstructions;
-  currentRecipeLocations = burgerLocations;
+  nextRecipe();
 };
 
 int Map::getFacingDirection() {
@@ -45,13 +44,18 @@ double Map::getNextLocation() {
 }
 
 void Map::nextRecipe() {
-  Food nextRecipe = recipes[++recipeIndex];
+  Food nextRecipe = recipes[recipeIndex++];
   instructionIndex = 0;
   locationIndex = 0;
   switch (nextRecipe) {
     case BURGER: {
       currentRecipeInstructions = burgerInstructions;
       currentRecipeLocations = burgerLocations;
+      break;
+    }
+    case TEST: {
+      currentRecipeInstructions = testInstructions;
+      currentRecipeLocations = testLocations;
       break;
     }
     default: {

@@ -50,7 +50,7 @@ double Motor::averageSpeed() {
       newAverage = ((newAverage * (6.0 - outliers)) - speeds[i]) / (5.0 - outliers);
     }
   }
-  Serial.println(newAverage);
+  //Serial.println(newAverage);
   currentAverageSpeed = newAverage;
   return newAverage;
 };

@@ -43,7 +43,8 @@ enum Instruction {
 enum Food {
   BURGER,
   DELUX_BURGER,
-  SALAD
+  SALAD,
+  TEST
 };
 
 #define LOOP_INTERVAL 10 //in millis
@@ -89,6 +90,6 @@ enum Food {
 #define MICRO_SWITCH_2 8
 
 //wheel radius in inch
-#define WHEEL_RADIUS 1.3
+#define WHEEL_RADIUS 1.28
 
 #endif

@@ -32,9 +32,11 @@ class Map{
     int recipeIndex;
     Instruction *currentRecipeInstructions;
     double *currentRecipeLocations;
-    Food recipes[2] = {BURGER, BURGER};
+    Food recipes[1] = {TEST};
     Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, WAIT, GRAB, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, END};
     double burgerLocations[7] = {BUNS, PLATES, PATTIES, COOKTOP, PLATES, BUNS, PLATES};
+    Instruction testInstructions[4] = {GO, TURN, GO, END};
+    double testLocations[2] = {COOKTOP, PATTIES};
 
 };
 #endif

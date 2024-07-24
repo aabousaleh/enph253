@@ -1,24 +1,25 @@
 //right motor pwm pins
-#define PWM_RIGHT_1 25//26
-#define PWM_RIGHT_2 4//32
+#define PWM_RIGHT_1 26
+#define PWM_RIGHT_2 32
 
 //left motor pwm pins
-#define PWM_LEFT_1 32//4
-#define PWM_LEFT_2 26//25
+#define PWM_LEFT_1 4
+#define PWM_LEFT_2 25
 
 //front right tcrt
-#define FR_TCRT 37//35
+#define FR_TCRT 35
 //front left tcrt
-#define FL_TCRT 38//34
+#define FL_TCRT 34
 //back right tcrt
-#define BR_TCRT 34//38
+#define BR_TCRT 38
 //back left tcrt
-#define BL_TCRT 35//37
+#define BL_TCRT 37
 
 unsigned long timeStart = 0;
 unsigned long lastTime = 0;
 
 void setup() {
+  Serial.begin(115200);
   // put your setup code here, to run once:
   pinMode(FR_TCRT, INPUT);
   pinMode(FL_TCRT, INPUT);
@@ -40,10 +41,10 @@ void setup() {
 
 void loop() {
   timeStart = millis();
-  if (timeStart < 6000) {
+  if (timeStart < 4500) {
     int rightSpeed = 240; //1000 max
     int leftSpeed = 240;
-    int correction = 165;
+    int correction = 75;
     //line sensing:
     double fr = analogRead(FR_TCRT);
     double fl = analogRead(FL_TCRT);
@@ -70,5 +71,15 @@ void loop() {
     ledcWrite(PWM_LEFT_1, 0);
     ledcWrite(PWM_LEFT_2, 0);
   }
-
+  // Serial.print("Frontright:");
+  // Serial.print(fr);
+  // Serial.print(",");
+  // Serial.print("Frontleft:");
+  // Serial.print(fl);
+  // Serial.print(",");
+  // Serial.print("Backright:");
+  // Serial.print(br);
+  // Serial.print(",");
+  // Serial.print("Backleft:");
+  // Serial.println(bl);
 }
