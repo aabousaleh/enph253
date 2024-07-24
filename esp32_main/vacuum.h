@@ -6,10 +6,8 @@
 class Vacuum {
 
   public:
-  int ctrlPin; //control pin (digital out) for vacuum
-  int sensPin; //current sense pin (analog in) for vacuum
-  int valvePin; //control pin (digital out) for solenoid valve
-  Vacuum(int _ctrlPin, int _sensPin, int _valvePin);
+  //setup the pump, valve and pump sense pins
+  void setupVacuum();
 
   /**
  * Turns vacuum end effector on or off (picks up or drops object)

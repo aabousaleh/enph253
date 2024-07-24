@@ -1,25 +1,22 @@
 #include "vacuum.h"
+#include "definitions.h"
 
-Vacuum::Vacuum(int _ctrlPin, int _sensPin, int _valvePin) {
-  ctrlPin = _ctrlPin;
-  sensPin = _sensPin;
-  valvePin = _valvePin;
+void Vacuum::setupVacuum() {
+  pinMode(PUMP, OUTPUT);
+  pinMode(VALVE, OUTPUT);
 
-  pinMode(ctrlPin, OUTPUT);
-  pinMode(valvePin, OUTPUT);
-
-  digitalWrite(ctrlPin, LOW);
-  digitalWrite(valvePin, LOW);
+  digitalWrite(PUMP, LOW);
+  digitalWrite(VALVE, LOW);
 }
 
 void Vacuum::setSucc(bool succ) {
   if (succ) {
-    digitalWrite(ctrlPin, HIGH);
+    digitalWrite(PUMP, HIGH);
   } else { //turns on solenoid, turns off pump
-    digitalWrite(valvePin, HIGH);
-    digitalWrite(ctrlPin, LOW);
+    digitalWrite(VALVE, HIGH);
+    digitalWrite(PUMP, LOW);
     delay(100); //TODO: MIGHT NEED TO CHANGE THIS DELAY VALUE
-    digitalWrite(valvePin, LOW);
+    digitalWrite(VALVE, LOW);
   }
 }
 
@@ -49,7 +46,7 @@ bool Vacuum::objSecured() {
 
   while (tNow - tStart <= DESIRED_PERIOD) {
     total -= currentReadings[index];
-    currentReadings[index] = analogRead(sensPin);
+    currentReadings[index] = analogRead(PUMP_SENSE);
     total += currentReadings[index];
 
     if (index < NUM_READINGS) index++;
