@@ -23,8 +23,8 @@ Motor::Motor(int _pinA, int _pinB, float _maxSpeed){
 void Motor::setSpeed(float speed) {
   int pwm = (abs(speed) < maxSpeed) ? (speed / maxSpeed) * 255.0 : 255 * speed / abs(speed);
   if (pwm >= 0) {
-    ledcWrite(pinB, 0);
     ledcWrite(pinA, pwm);
+    ledcWrite(pinB, 0);
   } else {
     ledcWrite(pinA, 0);
     ledcWrite(pinB, -pwm);
@@ -50,7 +50,7 @@ double Motor::averageSpeed() {
       newAverage = ((newAverage * (6.0 - outliers)) - speeds[i]) / (5.0 - outliers);
     }
   }
-  Serial.println(newAverage);
+  //Serial.println(newAverage);
   currentAverageSpeed = newAverage;
   return newAverage;
 };

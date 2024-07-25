@@ -6,6 +6,8 @@ Map::Map() {
   drivingDirection = 1;
   locationIndex = 0;
   instructionIndex = 0;
+  recipeIndex = 0;
+  nextRecipe();
 };
 
 int Map::getFacingDirection() {
@@ -21,10 +23,6 @@ int Map::getMovingDirection() {
   return facingDirection * drivingDirection;
 };
 
-// int Map::getLocation() {
-//   return location;
-// };
-
 State Map::getState() {
   return state;
 };
@@ -38,11 +36,34 @@ void Map::flipDrivingDirection() {
 };
 
 Instruction Map::getNextInstruction() {
-  return instructions[instructionIndex];
+  return currentRecipeInstructions[instructionIndex++];
 }
 
 double Map::getNextLocation() {
-  return locations[locationIndex];
+  return currentRecipeLocations[locationIndex++];
+}
+
+void Map::nextRecipe() {
+  Food nextRecipe = recipes[recipeIndex++];
+  instructionIndex = 0;
+  locationIndex = 0;
+  switch (nextRecipe) {
+    case BURGER: {
+      currentRecipeInstructions = burgerSansGrab;
+      currentRecipeLocations = burgerLocations;
+      break;
+    }
+    case TEST: {
+      currentRecipeInstructions = testInstructions;
+      currentRecipeLocations = testLocations;
+      break;
+    }
+    default: {
+
+      break;
+    }
+
+  }
 }
 
 // void IRAM_ATTR Map::updateLocationRight() {

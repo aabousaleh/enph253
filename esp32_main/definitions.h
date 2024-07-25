@@ -10,17 +10,17 @@ const double TAPE_WIDTH = 0.75;
 const double FIELD_LENGTH = 96;
 const double TOMATOES = 6;
 const double CUTTING = 29.75;
-const double COOKTOP = 72.25;
+const double COOKTOP = 72.5;
 const double PLATES = 90;
 
 //for robot id 0:
-const double PATTIES = 12.25;
+const double PATTIES = 12;
 const double BUNS = 48;
 const double POTATOES = 84;
 
 //for robot id 1:
 const double CHEESE = 6;
-const double SERVING_AREA = 48;
+const double SERVING = 48;
 const double LETTUCE = 90;
 
 enum State {
@@ -36,10 +36,18 @@ enum Instruction {
   GRAB,
   PLACE,
   TURN,
-  WAIT
+  WAIT,
+  END
 };
 
-#define PID_LOOP_INTERVAL 10 //in millis
+enum Food {
+  BURGER,
+  DELUX_BURGER,
+  SALAD,
+  TEST
+};
+
+#define LOOP_INTERVAL 10 //in millis
 
 //right motor pwm pins
 #define PWM_RIGHT_1 26 //Forward drive
@@ -82,6 +90,6 @@ enum Instruction {
 #define MICRO_SWITCH_2 8
 
 //wheel radius in inch
-#define WHEEL_RADIUS 1.3
+#define WHEEL_RADIUS 1.28
 
 #endif
