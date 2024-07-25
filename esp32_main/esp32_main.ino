@@ -91,6 +91,8 @@ void setup() {
 
   pinMode(CLAW_SERVO, OUTPUT);
 
+  ledcAttach(CLAW_SERVO, 50, 16);
+
   digitalWrite(PUMP, LOW);
 
   // attachInterrupt(digitalPinToInterrupt(RS_TCRT), rightStationInterrupt, CHANGE);
@@ -129,6 +131,10 @@ void setup() {
 
   currentInstruction = m.getNextInstruction();
   updateInstruction();
+
+  ledcWrite(CLAW_SERVO, 0.075);
+
+  DRIVING = false;
 }
 
 void loop() {
@@ -196,7 +202,7 @@ void loop() {
           // double leftAverageSpeed = left.averageSpeed();
 
           lineSensingCorrection();
-          move();
+          move(rightSpeedSetpoint, leftSpeedSetpoint);
           //Serial.println("moving");
           //updateEncoderPosition();
 
@@ -234,7 +240,7 @@ void loop() {
         if (!digitalRead(stationToRead)) {
           equalSpeedSet(ADJUSTING_SPEED * sign(BASE_SPEED));
           //lineSensingCorrection();
-          move();
+          move(rightSpeedSetpoint, leftSpeedSetpoint);
           //Serial.println("adjusting");
           //Serial.println(rightSpeedSetpoint);
           //updateEncoderPosition();
@@ -464,18 +470,20 @@ void equalSpeedSet(double speed) {
   leftSpeedSetpoint = speed;
 }
 
-void move() {
-  right.setSpeed(rightSpeedSetpoint * DRIVING);
-  left.setSpeed(leftSpeedSetpoint * DRIVING);
+void move(double rss, double lss) {
+  right.setSpeed(rss * DRIVING);
+  left.setSpeed(lss * DRIVING);
 }
 
 void brake(bool useBackdrive) {
   if (useBackdrive) {
     equalSpeedSet(-BASE_SPEED / 2.5);
-    right.setSpeed(rightSpeedSetpoint);
-    left.setSpeed(leftSpeedSetpoint);
+    move(rightSpeedSetpoint, leftSpeedSetpoint);
+    // right.setSpeed(rightSpeedSetpoint);
+    // left.setSpeed(leftSpeedSetpoint);
     delay(20);
   }
+  move(0,0);
   right.setSpeed(0); 
   left.setSpeed(0);
   right.clearSpeeds();
@@ -486,9 +494,20 @@ void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
   double finalAnglePosition = 10.75;//12.4;
   double currentPosition = 0;
-  right.setSpeed(dir * -TURNING_SPEED);
-  left.setSpeed(dir * TURNING_SPEED*1.10);
+  move(dir * -TURNING_SPEED, dir * TURNING_SPEED);
+  // right.setSpeed(dir * -TURNING_SPEED);
+  // left.setSpeed(dir * TURNING_SPEED);
   while (finalAnglePosition - currentPosition > 0) {
+    // if (currentPosition/finalAnglePosition < 0.2) {
+    //   right.setSpeed(dir * -TURNING_SPEED * 0.5);
+    //   left.setSpeed(dir * TURNING_SPEED * 0.5);
+    // } else if (currentPosition/finalAnglePosition < 0.8) {
+    //   right.setSpeed(dir * -TURNING_SPEED);
+    //   left.setSpeed(dir * TURNING_SPEED);
+    // } else {
+    //   right.setSpeed(dir * -TURNING_SPEED * 0.5);
+    //   left.setSpeed(dir * TURNING_SPEED * 0.5);
+    // }
     double currentAngle = as5600_1.readAngle() / 4096.0 * 360;
     double deltaA = currentAngle - lastAngle;
     if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360;
