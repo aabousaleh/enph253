@@ -42,12 +42,12 @@ enum Instruction {
 #define PID_LOOP_INTERVAL 10 //in millis
 
 //right motor pwm pins
-#define PWM_RIGHT_1 26
-#define PWM_RIGHT_2 32
+#define PWM_RIGHT_1 26 //Forward drive
+#define PWM_RIGHT_2 32 //Reverse drive
 
 //left motor pwm pins
-#define PWM_LEFT_1 4
-#define PWM_LEFT_2 25
+#define PWM_LEFT_1 4 //Forward drive
+#define PWM_LEFT_2 25 //Reverse drive
 
 //right encoder i2c
 #define I2C_SDA0 21
