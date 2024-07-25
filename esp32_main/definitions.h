@@ -44,7 +44,18 @@ enum Food {
   BURGER,
   DELUX_BURGER,
   SALAD,
+  CHEESE_PLATE,
   TEST
+};
+
+enum Ingredient {
+  patty,
+  bun,
+  potato,
+  tomato,
+  cheese,
+  lettuce,
+  plate
 };
 
 #define LOOP_INTERVAL 10 //in millis
@@ -85,6 +96,8 @@ enum Food {
 //#define VALVE_SENSE 33 //current sense 1
 
 #define CLAW_SERVO 2
+#define SHOULDER_SERVO 10
+#define ELBOW_SERVO 9
 
 #define MICRO_SWITCH_1 19
 #define MICRO_SWITCH_2 8

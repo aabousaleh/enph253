@@ -2,10 +2,11 @@
 
 Map::Map() {
   // location = 0;
-  facingDirection = 1;
+  facingDirection = -1;
   drivingDirection = 1;
   locationIndex = 0;
   instructionIndex = 0;
+  ingredientIndex =
   recipeIndex = 0;
   nextRecipe();
 };
@@ -43,6 +44,10 @@ double Map::getNextLocation() {
   return currentRecipeLocations[locationIndex++];
 }
 
+Ingredient Map::getNextIngredient() {
+  return currentRecipeIngredients[ingredientIndex++];
+}
+
 void Map::nextRecipe() {
   Food nextRecipe = recipes[recipeIndex++];
   instructionIndex = 0;
@@ -51,11 +56,19 @@ void Map::nextRecipe() {
     case BURGER: {
       currentRecipeInstructions = burgerSansGrab;
       currentRecipeLocations = burgerLocations;
+      currentRecipeIngredients = burgerIngredients;
       break;
     }
     case TEST: {
       currentRecipeInstructions = testInstructions;
       currentRecipeLocations = testLocations;
+      currentRecipeIngredients = testIngredients;
+      break;
+    }
+    case CHEESE_PLATE: {
+      currentRecipeInstructions = cheeseInstructions;
+      currentRecipeLocations = cheeseLocations;
+      currentRecipeIngredients = cheeseIngredients;
       break;
     }
     default: {

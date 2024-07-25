@@ -21,6 +21,7 @@ class Map{
     State state;
     Instruction getNextInstruction();
     double getNextLocation();
+    Ingredient getNextIngredient();
     void nextRecipe();
 
 
@@ -29,15 +30,28 @@ class Map{
     int drivingDirection;
     int locationIndex;
     int instructionIndex;
+    int ingredientIndex;
     int recipeIndex;
     Instruction *currentRecipeInstructions;
     double *currentRecipeLocations;
-    Food recipes[1] = {TEST};
+    Ingredient *currentRecipeIngredients;
+    Food recipes[1] = {CHEESE_PLATE};
+
+    //Burger
     Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, WAIT, GRAB, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, END};
     Instruction burgerSansGrab[15] = {GO, GO, TURN, GO, TURN, GO, GO, TURN, GO, TURN, GO, END};
     double burgerLocations[7] = {BUNS, PLATES, PATTIES, COOKTOP, PLATES, BUNS, PLATES};
-    Instruction testInstructions[4] = {TURN, END};
+    Ingredient burgerIngredients[5] = {bun, patty, patty, bun, plate};
+
+    //cheese
+    Instruction cheeseInstructions[15] = {GRAB, TURN, GO, PLACE, GRAB, TURN, GO, PLACE, END};
+    double cheeseLocations[2] = {PLATES, SERVING};
+    Ingredient cheeseIngredients[2] = {cheese, plate};
+
+    //Test
+    Instruction testInstructions[4] = {GRAB, PLACE, END};
     double testLocations[2] = {COOKTOP, PATTIES};
+    Ingredient testIngredients[2] = {plate};
 
 };
 #endif

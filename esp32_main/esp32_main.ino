@@ -6,6 +6,7 @@
 // #include "arduino-timer.h"
 #include "map.h"
 //#include "movement.ino"
+#include "arm.h"
 
 // #include <WiFi.h>
 // #include <ESPmDNS.h>
@@ -28,7 +29,7 @@ AS5600 as5600_1(&Wire1);
 const int MAX_SPEED = 1000;
 int BASE_SPEED = 600;
 double STEERING_CONSTANT = 0.272;
-double TURNING_SPEED = 0.1 * MAX_SPEED;
+double TURNING_SPEED = 0.075 * MAX_SPEED;
 double ADJUSTING_SPEED = 0.05 * MAX_SPEED;
 int TURNING_DELAY = 855;
 
@@ -55,7 +56,7 @@ Error leftPositionError(4096);
 Motor left(PWM_LEFT_1, PWM_LEFT_2, MAX_SPEED);
 double leftAngularSpeed;
 
-volatile double position = 5.75;
+volatile double position = CHEESE;
 // volatile float currentRightStation = 1;
 // volatile float currentLeftStation = 0.5;
 // volatile bool onRightStation = true;
@@ -69,6 +70,11 @@ int LAST_TURN = 0;
 
 double intendedPosition;
 Instruction currentInstruction;
+Ingredient currentIngredient;
+
+float height = 11;
+float reach = 15;
+float grabbing = 0.075;
 
 void setup() {
   
@@ -91,9 +97,10 @@ void setup() {
 
   pinMode(CLAW_SERVO, OUTPUT);
 
-  ledcAttach(CLAW_SERVO, 50, 16);
+  ledcAttach(CLAW_SERVO, SERVO_PWM_FREQUENCY, SERVO_PWM_RESOLUTION);
 
   digitalWrite(PUMP, LOW);
+  digitalWrite(VALVE, LOW);
 
   // attachInterrupt(digitalPinToInterrupt(RS_TCRT), rightStationInterrupt, CHANGE);
   // attachInterrupt(digitalPinToInterrupt(LS_TCRT), leftStationInterrupt, CHANGE);
@@ -118,6 +125,8 @@ void setup() {
 
   equalSpeedSet(BASE_SPEED);
 
+  setupArmServos();
+
   // WiFi.mode(WIFI_STA);
   // WiFi.begin(ssid, password);
   // while (WiFi.waitForConnectResult() != WL_CONNECTED) {
@@ -132,14 +141,12 @@ void setup() {
   currentInstruction = m.getNextInstruction();
   updateInstruction();
 
-  ledcWrite(CLAW_SERVO, 0.075);
-
-  DRIVING = false;
+  //DRIVING = false;
 }
 
 void loop() {
   timeStart = millis();
-  if (Serial.available() > 0){
+  /*if (Serial.available() > 0){
     // char c = Serial.read();
     // switch (c) {
     //   case 'P':
@@ -166,7 +173,7 @@ void loop() {
       // If the input format is incorrect
       Serial.println("Invalid input format. Please enter 'P I D'.");
     }
-  }
+  }*/
   //TODO: alot
   /*
   1. Add interrupts for microswitches to freeze the robot
@@ -222,8 +229,8 @@ void loop() {
           //Serial.println(deltaAngleAverage);
 
         } else {
-          brake(true);
-          delay(6500);
+          brake(false);
+          delay(500);
           currentInstruction = m.getNextInstruction();
           updateInstruction();
           //delay(1000);
@@ -272,21 +279,23 @@ void loop() {
         break;
       }
       case ARM: {
-        if (/*isReady*/ true) { //isReady to check that the other robot completed their task
+        if (true) { //isReady to check that the other robot completed their task
           if (currentInstruction == PLACE) {
-            //place();
-            if (abs(position - COOKTOP) < 1) {
-              //start timer
-              //broadcast it
-            }
+            place();
+            // if (abs(position - COOKTOP) < 1) {
+            //   //start timer
+            //   //broadcast it
+            // }
           } else if (currentInstruction == GRAB) {
-            //grab();
-            if (abs(position - COOKTOP) < 1) {
-              //stop timer
-              //broadcast it
-            }
+            currentIngredient = m.getNextIngredient();\
+            grab(currentIngredient);
+            // if (abs(position - COOKTOP) < 1) {
+            //   //stop timer
+            //   //broadcast it
+            // }
           }
           //send status to other robot
+          delay(1000);
           currentInstruction = m.getNextInstruction();
           updateInstruction();
         }
@@ -306,6 +315,135 @@ void loop() {
     dt = LOOP_INTERVAL / 1000.0;
   }
   delay(1);
+  // if (Serial.available() > 0) {
+  //   // Read the incoming byte
+  //   char incomingByte = Serial.read();
+  //   // Check which key was pressed
+  //   if (incomingByte == 'w') {
+  //     height += 0.2;
+  //     Serial.print("Height: ");
+  //     Serial.println(height);
+  //   } else if (incomingByte == 's') {
+  //     height -= 0.2;
+  //     Serial.print("Height: ");
+  //     Serial.println(height);
+  //   } else if (incomingByte == 'a') {
+  //     reach += 0.2;
+  //     Serial.print("Reach: ");
+  //     Serial.println(reach);
+  //   } else if (incomingByte == 'd') {
+  //     reach -= 0.2;
+  //     Serial.print("Reach: ");
+  //     Serial.println(reach);
+  //   } else if (incomingByte == 'q') {
+  //     digitalWrite(PUMP, HIGH);
+  //     Serial.println("Vacuum on");
+  //   } else if (incomingByte == 'e') {
+  //     digitalWrite(VALVE, HIGH);
+  //     digitalWrite(PUMP, LOW);
+  //     delay(100); //TODO: MIGHT NEED TO CHANGE THIS DELAY VALUE
+  //     digitalWrite(VALVE, LOW);
+  //     Serial.print("Vacuum off + solenoid");
+  //   }
+  // }
+  //moveToXY(reach, height);
+  //ledcWrite(CLAW_SERVO, (1<<SERVO_PWM_RESOLUTION) * grabbing);
+  // grab(cheese);
+  // delay(1000);
+  // place();
+  // delay(5000);
+}
+
+void grab(Ingredient i) {
+  switch (i) {
+    case cheese: {
+      moveToXY(20, 17);
+      delay(500);
+      moveToXY(33.8, 17);
+      delay(500);
+      moveToXY(33.8, 7.8);
+      digitalWrite(PUMP, HIGH);
+      delay(2000);
+      moveToXY(33.8, 18);
+      delay(500);
+      moveToXY(15, 12);
+      break;
+    }
+    case patty: {
+
+      break;
+    }
+    case bun: {
+
+      break;
+    }
+    case plate: {
+      for (int i = 0; i <= 5; i++) {
+        moveToXY(20, 15 - i);
+        delay(25);
+      }
+      delay(500);
+      for (int i = 0; i <= 15; i++) {
+        moveToXY(20 + i, 10);
+        delay(25);
+      }
+      moveToXY(35, 20);
+      delay(500);
+      moveToXY(20, 16);
+      delay(500);
+      moveToXY(15, 12);
+      break;
+    }
+    case tomato: {
+
+      break;
+    }
+    case lettuce: {
+
+      break;
+    }
+    case potato: {
+      //stupid fries
+      break;
+    }
+  }
+  //turn on vacuum
+  //bring arm up and back
+}
+
+void place() {
+  //move arm to correct location
+  //turn off pump
+  //switch solenoid
+  //bring arm back
+  if (currentIngredient == plate) {
+    moveToXY(19, 16);
+    delay(500);
+    for (int i = 0; i <= 15; i++) {
+      moveToXY(20 + i, 16);
+      delay(25);
+    }
+    delay(500);
+    for (double i = 0; i <= 6.5; i = i + 0.5) {
+      moveToXY(35, 16 - i);
+      delay(25);
+    }
+    delay(500);
+    moveToXY(18, 9.5);
+    delay(500);
+    moveToXY(15, 12);
+  } else {
+    moveToXY(20,16);
+    delay(500);
+    moveToXY(45, 16);
+    delay(500);
+    digitalWrite(VALVE, HIGH);
+    digitalWrite(PUMP, LOW);
+    delay(100); //TODO: MIGHT NEED TO CHANGE THIS DELAY VALUE
+    digitalWrite(VALVE, LOW);
+    delay(1000);
+    moveToXY(15, 12);
+  }
 }
 
 //deprecated
@@ -471,8 +609,9 @@ void equalSpeedSet(double speed) {
 }
 
 void move(double rss, double lss) {
-  right.setSpeed(rss * DRIVING);
   left.setSpeed(lss * DRIVING);
+  delay(10);
+  right.setSpeed(rss * DRIVING);
 }
 
 void brake(bool useBackdrive) {
@@ -484,15 +623,13 @@ void brake(bool useBackdrive) {
     delay(20);
   }
   move(0,0);
-  right.setSpeed(0); 
-  left.setSpeed(0);
   right.clearSpeeds();
   left.clearSpeeds();
 }
 
 void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
-  double finalAnglePosition = 10.75;//12.4;
+  double finalAnglePosition = 11;//12.4;
   double currentPosition = 0;
   move(dir * -TURNING_SPEED, dir * TURNING_SPEED);
   // right.setSpeed(dir * -TURNING_SPEED);
