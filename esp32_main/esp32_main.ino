@@ -639,6 +639,8 @@ void spin180Encoder(int dir) {
   move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
   // right.setSpeed(dir * -TURNING_SPEED);
   // left.setSpeed(dir * TURNING_SPEED);
+  int jitter = 1;
+  unsigned long currentMillis = millis();
   while (finalAnglePosition - currentPosition > 0) {
     // if (currentPosition/finalAnglePosition < 0.2) {
     //   right.setSpeed(dir * -TURNING_SPEED * 0.5);
@@ -655,6 +657,16 @@ void spin180Encoder(int dir) {
     if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360;
     currentPosition += deltaA/360.0 * 6.28 * WHEEL_RADIUS;
     lastAngle = currentAngle;
+    if (millis() - currentMillis > 50) {
+      currentMillis = millis();
+      jitter *= -1;
+    }
+    if (jitter == 1) {
+      move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
+    }
+    if (jitter == -1) {
+      brake(false);
+    }
     //delayMicroseconds(200);
   }
   //spinBrake(1);
