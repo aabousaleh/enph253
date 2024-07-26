@@ -362,7 +362,8 @@ void grab(Ingredient i) {
       moveToXY(33.8, 17);
       delay(1000);
       moveToXY(33.8, 7.8);
-      digitalWrite(PUMP, HIGH);
+      //digitalWrite(PUMP, HIGH);
+      //TODO: CLOSE GRIPPER
       delay(1000);
       moveToXY(33.8, 18);
       delay(500);
@@ -395,7 +396,22 @@ void grab(Ingredient i) {
       break;
     }
     case tomato: {
-
+      for (int i = 0; i <= 5; i++) {
+        moveToXY(20, 15 - i);
+        delay(25);
+      }
+      delay(500);
+      for (int i = 0; i <= 16; i++) {
+        moveToXY(20 + i, 10);
+        delay(25);
+      }
+      //TODO: CLOSE THE GRIPPER
+      delay(500);
+      moveToXY(37, 15.5);
+      delay(1000);
+      moveToXY(20, 15.5);
+      delay(500);
+      moveToXY(16, 12.5);
       break;
     }
     case lettuce: {
@@ -437,10 +453,7 @@ void place() {
     delay(500);
     moveToXY(41, 16);
     delay(500);
-    digitalWrite(VALVE, HIGH);
-    digitalWrite(PUMP, LOW);
-    delay(100); //TODO: MIGHT NEED TO CHANGE THIS DELAY VALUE
-    digitalWrite(VALVE, LOW);
+    // TODO: OPEN THE GRIPPER
     delay(1000);
     moveToXY(15, 12);
   }

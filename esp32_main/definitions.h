@@ -45,7 +45,8 @@ enum Food {
   DELUX_BURGER,
   SALAD,
   CHEESE_PLATE,
-  TEST
+  TEST,
+  OVER
 };
 
 enum Ingredient {
