@@ -1,7 +1,7 @@
 #include "vacuum.h"
 #include "definitions.h"
 
-void Vacuum::setupVacuum() {
+Vacuum::Vacuum() {
   pinMode(PUMP, OUTPUT);
   pinMode(VALVE, OUTPUT);
 

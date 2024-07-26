@@ -7,7 +7,7 @@ class Vacuum {
 
   public:
   //setup the pump, valve and pump sense pins
-  void setupVacuum();
+  Vacuum();
 
   /**
  * Turns vacuum end effector on or off (picks up or drops object)
