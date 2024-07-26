@@ -28,8 +28,8 @@ AS5600 as5600_1(&Wire1);
 //Speed constants
 const int MAX_SPEED = 1000;
 int BASE_SPEED = 600;
-double STEERING_CONSTANT = 0.271;
-double TURNING_SPEED = 0.055 * MAX_SPEED;
+double STEERING_CONSTANT = 0.2715;
+double TURNING_SPEED = 0.045 * MAX_SPEED;
 double ADJUSTING_SPEED = 0.05 * MAX_SPEED;
 int TURNING_DELAY = 855;
 
@@ -473,15 +473,20 @@ void updateInstruction() {
       break;
     }
     case WAIT: {
+      DRIVING = false;
+      brake(false);
       m.state = WAITING;
       break;
     }
     case END: {
       //TODO: fix this case
       // m.nextRecipe();
-      DRIVING = false;
+      // DRIVING = false;
       brake(false);
-      m.state = WAITING;
+      m.nextRecipe();
+      currentInstruction = m.getNextInstruction();
+      updateInstruction();
+      //m.state = WAITING;
       break;
     }
     default: {
@@ -629,9 +634,9 @@ void brake(bool useBackdrive) {
 
 void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
-  double finalAnglePosition = 12.3;//12.4;
+  double finalAnglePosition = 12.25;//12.4;
   double currentPosition = 0;
-  move(dir * -TURNING_SPEED, dir * TURNING_SPEED);
+  move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
   // right.setSpeed(dir * -TURNING_SPEED);
   // left.setSpeed(dir * TURNING_SPEED);
   while (finalAnglePosition - currentPosition > 0) {

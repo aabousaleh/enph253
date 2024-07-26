@@ -103,6 +103,6 @@ enum Ingredient {
 #define MICRO_SWITCH_2 8
 
 //wheel radius in inch
-#define WHEEL_RADIUS 1.28
+#define WHEEL_RADIUS 1.285
 
 #endif

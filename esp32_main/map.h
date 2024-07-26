@@ -35,7 +35,7 @@ class Map{
     Instruction *currentRecipeInstructions;
     double *currentRecipeLocations;
     Ingredient *currentRecipeIngredients;
-    Food recipes[1] = {CHEESE_PLATE};
+    Food recipes[4] = {CHEESE_PLATE, CHEESE_PLATE, CHEESE_PLATE};
 
     //Burger
     Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, WAIT, GRAB, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, END};
@@ -44,14 +44,16 @@ class Map{
     Ingredient burgerIngredients[5] = {bun, patty, patty, bun, plate};
 
     //cheese
-    Instruction cheeseInstructions[15] = {GRAB, TURN, GO, PLACE, GRAB, TURN, GO, PLACE, END};
-    double cheeseLocations[2] = {PLATES, SERVING};
+    Instruction cheeseInstructions[15] = {GO, GRAB, TURN, GO, PLACE, GRAB, TURN, GO, PLACE, END};
+    double cheeseLocations[5] = {CHEESE, PLATES, SERVING};
     Ingredient cheeseIngredients[2] = {cheese, plate};
 
     //Test
     Instruction testInstructions[4] = {GRAB, PLACE, END};
     double testLocations[2] = {COOKTOP, PATTIES};
     Ingredient testIngredients[2] = {plate};
+
+    Instruction endInstructions[1] = {WAIT};
 
 };
 #endif

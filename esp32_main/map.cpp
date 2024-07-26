@@ -49,9 +49,15 @@ Ingredient Map::getNextIngredient() {
 }
 
 void Map::nextRecipe() {
+  if (recipeIndex == 3) {
+    currentRecipeInstructions = endInstructions;
+    //currentRecipeLocations = endLocations;
+    //return;
+  } else {
   Food nextRecipe = recipes[recipeIndex++];
   instructionIndex = 0;
   locationIndex = 0;
+  ingredientIndex = 0;
   switch (nextRecipe) {
     case BURGER: {
       currentRecipeInstructions = burgerSansGrab;
@@ -76,6 +82,7 @@ void Map::nextRecipe() {
       break;
     }
 
+  }
   }
 }
 
