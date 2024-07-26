@@ -11,7 +11,7 @@ const double FIELD_LENGTH = 96;
 const double TOMATOES = 6;
 const double CUTTING = 29.75;
 const double COOKTOP = 72.5;
-const double PLATES = 90;
+const double PLATES = 89.75;
 
 //for robot id 0:
 const double PATTIES = 12;

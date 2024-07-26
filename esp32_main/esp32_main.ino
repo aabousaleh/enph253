@@ -28,8 +28,8 @@ AS5600 as5600_1(&Wire1);
 //Speed constants
 const int MAX_SPEED = 1000;
 int BASE_SPEED = 600;
-double STEERING_CONSTANT = 0.272;
-double TURNING_SPEED = 0.075 * MAX_SPEED;
+double STEERING_CONSTANT = 0.271;
+double TURNING_SPEED = 0.055 * MAX_SPEED;
 double ADJUSTING_SPEED = 0.05 * MAX_SPEED;
 int TURNING_DELAY = 855;
 
@@ -358,12 +358,12 @@ void grab(Ingredient i) {
   switch (i) {
     case cheese: {
       moveToXY(20, 17);
-      delay(500);
+      delay(750);
       moveToXY(33.8, 17);
-      delay(500);
+      delay(1000);
       moveToXY(33.8, 7.8);
       digitalWrite(PUMP, HIGH);
-      delay(2000);
+      delay(1000);
       moveToXY(33.8, 18);
       delay(500);
       moveToXY(15, 12);
@@ -383,15 +383,15 @@ void grab(Ingredient i) {
         delay(25);
       }
       delay(500);
-      for (int i = 0; i <= 15; i++) {
+      for (int i = 0; i <= 16; i++) {
         moveToXY(20 + i, 10);
         delay(25);
       }
-      moveToXY(35, 20);
+      moveToXY(37, 15.5);
+      delay(1000);
+      moveToXY(20, 15.5);
       delay(500);
-      moveToXY(20, 16);
-      delay(500);
-      moveToXY(15, 12);
+      moveToXY(16, 12.5);
       break;
     }
     case tomato: {
@@ -429,13 +429,13 @@ void place() {
       delay(25);
     }
     delay(500);
-    moveToXY(18, 9.5);
+    moveToXY(16, 9.5);
     delay(500);
     moveToXY(15, 12);
   } else {
     moveToXY(20,16);
     delay(500);
-    moveToXY(45, 16);
+    moveToXY(41, 16);
     delay(500);
     digitalWrite(VALVE, HIGH);
     digitalWrite(PUMP, LOW);
@@ -559,13 +559,13 @@ void lineSensingCorrection() {
       if (fr < 4000 && fl < 4000) OFF_THE_LINE = true;
       if (front_correction > 0 || (OFF_THE_LINE && (LAST_TURN == 1))) {
         Serial.println("F right");
-        rightSpeedSetpoint = BASE_SPEED * (1.0 - (STEERING_CONSTANT + LAST_TURN*0.15));
+        rightSpeedSetpoint = BASE_SPEED * (1.0 - (STEERING_CONSTANT));
         leftSpeedSetpoint = BASE_SPEED;
         if (!OFF_THE_LINE) LAST_TURN = 1;
       }
       else if (front_correction < 0 || (OFF_THE_LINE && (LAST_TURN == -1))) {
         //Serial.println("F left");
-        leftSpeedSetpoint =  BASE_SPEED * (1.0 - (STEERING_CONSTANT + LAST_TURN*0.15));
+        leftSpeedSetpoint =  BASE_SPEED * (1.0 - (STEERING_CONSTANT));
         rightSpeedSetpoint = BASE_SPEED;
         if (!OFF_THE_LINE) LAST_TURN = -1;
       } else {
@@ -580,13 +580,13 @@ void lineSensingCorrection() {
       if (back_correction > 0 || (OFF_THE_LINE && (LAST_TURN == -1))) {
         if (!OFF_THE_LINE) LAST_TURN = -1;
         //Serial.println("B right");
-        leftSpeedSetpoint = BASE_SPEED * (1.0 - STEERING_CONSTANT*2.3);
+        leftSpeedSetpoint = BASE_SPEED * (1.0 - STEERING_CONSTANT*2.25);
         rightSpeedSetpoint = BASE_SPEED;
       }
       else if (back_correction < 0 || (OFF_THE_LINE && (LAST_TURN == 1))) {
         if (!OFF_THE_LINE) LAST_TURN = 1;
         //Serial.println("B left");
-        rightSpeedSetpoint = BASE_SPEED * (1.0 - STEERING_CONSTANT*2.3);
+        rightSpeedSetpoint = BASE_SPEED * (1.0 - STEERING_CONSTANT*2.25);
         leftSpeedSetpoint = BASE_SPEED;
       } else {
         LAST_TURN = 0;
@@ -610,7 +610,7 @@ void equalSpeedSet(double speed) {
 
 void move(double rss, double lss) {
   left.setSpeed(lss * DRIVING);
-  delay(10);
+  //delay(10);
   right.setSpeed(rss * DRIVING);
 }
 
@@ -629,7 +629,7 @@ void brake(bool useBackdrive) {
 
 void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
-  double finalAnglePosition = 11;//12.4;
+  double finalAnglePosition = 12.3;//12.4;
   double currentPosition = 0;
   move(dir * -TURNING_SPEED, dir * TURNING_SPEED);
   // right.setSpeed(dir * -TURNING_SPEED);

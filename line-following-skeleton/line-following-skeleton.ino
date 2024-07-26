@@ -44,7 +44,7 @@ void loop() {
   if (timeStart < 4500) {
     int rightSpeed = 240; //1000 max
     int leftSpeed = 240;
-    int correction = 50;
+    int correction = 65;
     //line sensing:
     double fr = analogRead(FR_TCRT);
     double fl = analogRead(FL_TCRT);
