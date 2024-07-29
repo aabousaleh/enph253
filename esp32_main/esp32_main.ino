@@ -5,6 +5,7 @@
 #include "definitions.h"
 // #include "arduino-timer.h"
 #include "map.h"
+#include "vacuum.h"
 //#include "movement.ino"
 
 // #include <WiFi.h>
@@ -56,6 +57,8 @@ Error leftPositionError(4096);
 Motor left(PWM_LEFT_1, PWM_LEFT_2, MAX_SPEED);
 double leftAngularSpeed;
 
+Vacuum pump;
+
 volatile double position = 5.75;
 
 double GAIN_P = 0.45;
@@ -82,13 +85,13 @@ void setup()
   pinMode(MICRO_SWITCH_1, INPUT);
   pinMode(MICRO_SWITCH_2, INPUT);
 
-  pinMode(PUMP_SENSE, INPUT);
-  pinMode(PUMP, OUTPUT);
-  pinMode(VALVE, OUTPUT);
+  // pinMode(PUMP_SENSE, INPUT);
+  // pinMode(PUMP, OUTPUT);
+  // pinMode(VALVE, OUTPUT);
 
   pinMode(CLAW_SERVO, OUTPUT);
 
-  digitalWrite(PUMP, LOW);
+  // digitalWrite(PUMP, LOW);
 
   // attachInterrupt(digitalPinToInterrupt(RS_TCRT), updateLocationRight, RISING);
   // attachInterrupt(digitalPinToInterrupt(LS_TCRT), updateLocationLeft, RISING);
@@ -127,128 +130,132 @@ void setup()
 }
 
 void loop() {
-  timeStart = millis();
-  if (Serial.available() > 0){
-    // char c = Serial.read();
-    // switch (c) {
-    //   case 'P':
+  pump.setSucc(true);
+  delay(10000);
+  pump.setSucc(false);
+  delay(5000);
+  // timeStart = millis();
+  // if (Serial.available() > 0){
+  //   // char c = Serial.read();
+  //   // switch (c) {
+  //   //   case 'P':
 
-    // }
-    // GAIN_P = Serial.parseFloat();
-    // Read the incoming byte (assuming the data format is 'P I D')
-    String input = Serial.readStringUntil('\n');
-    // Split the input string into three parts (P, I, D)
-    int spaceIndex1 = input.indexOf(' ');
-    int spaceIndex2 = input.lastIndexOf(' ');
-    if (spaceIndex1 != -1 && spaceIndex2 != -1 && spaceIndex1 != spaceIndex2) {
-      // Extract P, I, D from the input string
-      String strP = input.substring(0, spaceIndex1);
-      String strI = input.substring(spaceIndex1 + 1, spaceIndex2);
-      String strD = input.substring(spaceIndex2 + 1);
+  //   // }
+  //   // GAIN_P = Serial.parseFloat();
+  //   // Read the incoming byte (assuming the data format is 'P I D')
+  //   String input = Serial.readStringUntil('\n');
+  //   // Split the input string into three parts (P, I, D)
+  //   int spaceIndex1 = input.indexOf(' ');
+  //   int spaceIndex2 = input.lastIndexOf(' ');
+  //   if (spaceIndex1 != -1 && spaceIndex2 != -1 && spaceIndex1 != spaceIndex2) {
+  //     // Extract P, I, D from the input string
+  //     String strP = input.substring(0, spaceIndex1);
+  //     String strI = input.substring(spaceIndex1 + 1, spaceIndex2);
+  //     String strD = input.substring(spaceIndex2 + 1);
       
-      // Convert strings to doubles
-      GAIN_P = strP.toDouble();
-      GAIN_I = strI.toDouble();
-      GAIN_D = strD.toDouble();
-    }
-    else {
-      // If the input format is incorrect
-      Serial.println("Invalid input format. Please enter 'P I D'.");
-    }
-  }
-  if (timeStart - lastTime > PID_LOOP_INTERVAL) {
-    switch (m.state) {
-      case MOVE: {
+  //     // Convert strings to doubles
+  //     GAIN_P = strP.toDouble();
+  //     GAIN_I = strI.toDouble();
+  //     GAIN_D = strD.toDouble();
+  //   }
+  //   else {
+  //     // If the input format is incorrect
+  //     Serial.println("Invalid input format. Please enter 'P I D'.");
+  //   }
+  // }
+  // if (timeStart - lastTime > PID_LOOP_INTERVAL) {
+  //   switch (m.state) {
+  //     case MOVE: {
         
-        //set speed according to distance from desired position
-        //interrupt on the destination station tape line: full brake + go to ADJUST
-        double distance = intendedPosition - position;
-        if (abs(distance) > 0.5) {
-          BASE_SPEED = distance > 5 ? 1000 * sign(distance) : 200 * sign(distance);
-          equalSpeedSet(BASE_SPEED);
-          rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
-          leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
-          right.updateSpeeds(rightAngularSpeed);
-          left.updateSpeeds(leftAngularSpeed);
-          double rightAverageSpeed = right.averageSpeed();
-          double leftAverageSpeed = left.averageSpeed();
+  //       //set speed according to distance from desired position
+  //       //interrupt on the destination station tape line: full brake + go to ADJUST
+  //       double distance = intendedPosition - position;
+  //       if (abs(distance) > 0.5) {
+  //         BASE_SPEED = distance > 5 ? 1000 * sign(distance) : 200 * sign(distance);
+  //         equalSpeedSet(BASE_SPEED);
+  //         rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
+  //         leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
+  //         right.updateSpeeds(rightAngularSpeed);
+  //         left.updateSpeeds(leftAngularSpeed);
+  //         double rightAverageSpeed = right.averageSpeed();
+  //         double leftAverageSpeed = left.averageSpeed();
 
-          lineSensingCorrection();
-          move();
-          updateEncoderPosition();
+  //         lineSensingCorrection();
+  //         move();
+  //         updateEncoderPosition();
 
-          Serial.print("Setpoint:");
-          Serial.print(intendedPosition);
-          Serial.print(",");
-          Serial.print("Right_Avg_Speed:");
-          Serial.print(rightAverageSpeed);
-          Serial.print(",");
-          Serial.print("Left_Avg_Speed:");
-          Serial.print(leftAverageSpeed);
-          Serial.print(",");
-          Serial.print("Position:");
-          Serial.println(position);
-        } else {
-          brake();
-          delay(50);
-          m.state = ADJUST;
-        }
+  //         Serial.print("Setpoint:");
+  //         Serial.print(intendedPosition);
+  //         Serial.print(",");
+  //         Serial.print("Right_Avg_Speed:");
+  //         Serial.print(rightAverageSpeed);
+  //         Serial.print(",");
+  //         Serial.print("Left_Avg_Speed:");
+  //         Serial.print(leftAverageSpeed);
+  //         Serial.print(",");
+  //         Serial.print("Position:");
+  //         Serial.println(position);
+  //       } else {
+  //         brake();
+  //         delay(50);
+  //         m.state = ADJUST;
+  //       }
         
-        lastTime = timeStart;
-        break;
-      }
-      case ADJUST: {
-        //roll backwards slowly until you find edge of tape
-        //move precisely one tape-width's distance further
-        //go to ARM
+  //       lastTime = timeStart;
+  //       break;
+  //     }
+  //     case ADJUST: {
+  //       //roll backwards slowly until you find edge of tape
+  //       //move precisely one tape-width's distance further
+  //       //go to ARM
 
-        int stationToRead = m.getFacingDirection() == 1 ? LS_TCRT : RS_TCRT;
+  //       int stationToRead = m.getFacingDirection() == 1 ? LS_TCRT : RS_TCRT;
 
-        if (!digitalRead(stationToRead)) {
-          equalSpeedSet(ADJUSTING_SPEED * sign(intendedPosition - position) * m.getFacingDirection());
-          move();
-        } 
-        // else {
-        //   final = position +- TAPE_WIDTH / 2.0;
-        //   while (position != final) {
-        //     pid();
-        //   }
+  //       if (!digitalRead(stationToRead)) {
+  //         equalSpeedSet(ADJUSTING_SPEED * sign(intendedPosition - position) * m.getFacingDirection());
+  //         move();
+  //       } 
+  //       // else {
+  //       //   final = position +- TAPE_WIDTH / 2.0;
+  //       //   while (position != final) {
+  //       //     pid();
+  //       //   }
           
-        // }
+  //       // }
 
-        break;
-      }
-      case SPIN: {
+  //       break;
+  //     }
+  //     case SPIN: {
 
-        break;
-      }
-      case ARM: {
-        // if (isReady) { //isReady to check that the other robot completed their task
-        //   if (hasObject) { 
-        //     place();
-        //     hasObject = false;
-        //   } else {
-        //     grab();
-        //     hasObject = true;
-        //   }
-        // }
+  //       break;
+  //     }
+  //     case ARM: {
+  //       // if (isReady) { //isReady to check that the other robot completed their task
+  //       //   if (hasObject) { 
+  //       //     place();
+  //       //     hasObject = false;
+  //       //   } else {
+  //       //     grab();
+  //       //     hasObject = true;
+  //       //   }
+  //       // }
 
-        //update state now? depends on recipe tho, figure that out gl bro
-        break;
-      }
-      case WAIT: {
+  //       //update state now? depends on recipe tho, figure that out gl bro
+  //       break;
+  //     }
+  //     case WAIT: {
 
-        break;
-      }
-      default: {
+  //       break;
+  //     }
+  //     default: {
 
-        break;
-      }
-    }
-  } else {
-    dt = PID_LOOP_INTERVAL / 1000.0;
-  }
-  delay(1);
+  //       break;
+  //     }
+  //   }
+  // } else {
+  //   dt = PID_LOOP_INTERVAL / 1000.0;
+  // }
+  // delay(1);
 }
 
 void updateEncoderPosition() {
