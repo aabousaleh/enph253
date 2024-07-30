@@ -58,14 +58,6 @@ Motor left(PWM_LEFT_1, PWM_LEFT_2, MAX_SPEED);
 double leftAngularSpeed;
 
 volatile double position = CHEESE;
-// volatile float currentRightStation = 1;
-// volatile float currentLeftStation = 0.5;
-// volatile bool onRightStation = true;
-// volatile bool onLeftStation = false;
-
-double GAIN_P = 0.45;
-double GAIN_I = 0.35;
-double GAIN_D = 0.001;
 
 int LAST_TURN = 0;
 
@@ -150,10 +142,6 @@ void setup() {
 void loop() {
   timeStart = millis();
 
-  // v.setSucc(true);
-  // delay(10000);
-  // v.setSucc(false);
-  // delay(5000);
   /*if (Serial.available() > 0){
     // char c = Serial.read();
     // switch (c) {
@@ -207,35 +195,9 @@ void loop() {
         double distance = intendedPosition - position;
         if (abs(distance) > 0.15) {
           BASE_SPEED = abs(distance) > 10 ? 240 * sign(distance) * m.getFacingDirection() : 100 * sign(distance) * m.getFacingDirection();
-        
           equalSpeedSet(BASE_SPEED);
-          // rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
-          // leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
-          // right.updateSpeeds(rightAngularSpeed);
-          // left.updateSpeeds(leftAngularSpeed);
-          // double rightAverageSpeed = right.averageSpeed();
-          // double leftAverageSpeed = left.averageSpeed();
-
           lineSensingCorrection();
           move(rightSpeedSetpoint, leftSpeedSetpoint);
-          //Serial.println("moving");
-          //updateEncoderPosition();
-
-          //Serial.print("Position:");
-          //Serial.print(position);
-          //Serial.print(",");
-          //Serial.print("Setpoint:");
-          //Serial.print(intendedPosition);
-          //Serial.print(",");
-          //Serial.print("Right_Angle:");
-          //Serial.print(rightCurrentAngle);
-          //Serial.print(",");
-          //Serial.print("Left_Angle:");
-          //Serial.print(leftCurrentAngle);
-          //Serial.print(",");
-          //Serial.print("deltaAngle:");
-          //Serial.println(deltaAngleAverage);
-
         } else {
           brake(false);
           delay(500);
@@ -323,43 +285,6 @@ void loop() {
     dt = LOOP_INTERVAL / 1000.0;
   }
   delay(1);
-  // if (Serial.available() > 0) {
-  //   // Read the incoming byte
-  //   char incomingByte = Serial.read();
-  //   // Check which key was pressed
-  //   if (incomingByte == 'w') {
-  //     height += 0.2;
-  //     Serial.print("Height: ");
-  //     Serial.println(height);
-  //   } else if (incomingByte == 's') {
-  //     height -= 0.2;
-  //     Serial.print("Height: ");
-  //     Serial.println(height);
-  //   } else if (incomingByte == 'a') {
-  //     reach += 0.2;
-  //     Serial.print("Reach: ");
-  //     Serial.println(reach);
-  //   } else if (incomingByte == 'd') {
-  //     reach -= 0.2;
-  //     Serial.print("Reach: ");
-  //     Serial.println(reach);
-  //   } else if (incomingByte == 'q') {
-  //     digitalWrite(PUMP, HIGH);
-  //     Serial.println("Vacuum on");
-  //   } else if (incomingByte == 'e') {
-  //     digitalWrite(VALVE, HIGH);
-  //     digitalWrite(PUMP, LOW);
-  //     delay(100); //TODO: MIGHT NEED TO CHANGE THIS DELAY VALUE
-  //     digitalWrite(VALVE, LOW);
-  //     Serial.print("Vacuum off + solenoid");
-  //   }
-  // }
-  //moveToXY(reach, height);
-  //ledcWrite(CLAW_SERVO, (1<<SERVO_PWM_RESOLUTION) * grabbing);
-  // grab(cheese);
-  // delay(1000);
-  // place();
-  // delay(5000);
 }
 
 void grab(Ingredient i) {
@@ -415,8 +340,6 @@ void grab(Ingredient i) {
       break;
     }
   }
-  //turn on vacuum
-  //bring arm up and back
 }
 
 void place() {
@@ -526,10 +449,8 @@ float getAngularSpeed(AS5600 *a, int encoderNum) {
     deltaA = angleEnd - lastAngle_1;
     lastAngle_1 = angleEnd;
   }
-
   if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360; //this is a fix for when it goes from 0 -> 360 or vice versa
   float speed = deltaA / dt;
-
   return speed;
 }
 
@@ -544,23 +465,6 @@ void lineSensingCorrection() {
   double br = analogRead(BR_TCRT);
   double bl = analogRead(BL_TCRT);
 
-  // Serial.println(fr);
-  // Serial.println(fl);
-  // Serial.println(br);
-  // Serial.println(bl);
-
-  // Serial.print("Frontright:");
-  // Serial.print(fr);
-  // Serial.print(",");
-  // Serial.print("Frontleft:");
-  // Serial.print(fl);
-  // Serial.print(",");
-  // Serial.print("Backright:");
-  // Serial.print(br);
-  // Serial.print(",");
-  // Serial.print("Backleft:");
-  // Serial.println(bl);
-
   int front_correction = (fr - fl);
   int back_correction = (bl - br);
 
@@ -571,18 +475,15 @@ void lineSensingCorrection() {
     if (m.getDrivingDirection() == 1 && BASE_SPEED > 0) {
       if (fr < 4000 && fl < 4000) OFF_THE_LINE = true;
       if (front_correction > 0 || (OFF_THE_LINE && (LAST_TURN == 1))) {
-        Serial.println("F right");
         rightSpeedSetpoint = BASE_SPEED * (1.0 - (STEERING_CONSTANT));
         leftSpeedSetpoint = BASE_SPEED;
         if (!OFF_THE_LINE) LAST_TURN = 1;
       }
       else if (front_correction < 0 || (OFF_THE_LINE && (LAST_TURN == -1))) {
-        //Serial.println("F left");
         leftSpeedSetpoint =  BASE_SPEED * (1.0 - (STEERING_CONSTANT));
         rightSpeedSetpoint = BASE_SPEED;
         if (!OFF_THE_LINE) LAST_TURN = -1;
       } else {
-        //Serial.println("F straight");
         LAST_TURN = 0;
         OFF_THE_LINE = false;
         leftSpeedSetpoint = BASE_SPEED;
@@ -592,18 +493,15 @@ void lineSensingCorrection() {
       if (br < 4000 && bl < 4000) OFF_THE_LINE = true;
       if (back_correction > 0 || (OFF_THE_LINE && (LAST_TURN == -1))) {
         if (!OFF_THE_LINE) LAST_TURN = -1;
-        //Serial.println("B right");
         leftSpeedSetpoint = BASE_SPEED * (1.0 - STEERING_CONSTANT*2.25);
         rightSpeedSetpoint = BASE_SPEED;
       }
       else if (back_correction < 0 || (OFF_THE_LINE && (LAST_TURN == 1))) {
         if (!OFF_THE_LINE) LAST_TURN = 1;
-        //Serial.println("B left");
         rightSpeedSetpoint = BASE_SPEED * (1.0 - STEERING_CONSTANT*2.25);
         leftSpeedSetpoint = BASE_SPEED;
       } else {
         LAST_TURN = 0;
-        //Serial.println("B straight");
         OFF_THE_LINE = false;
         leftSpeedSetpoint = BASE_SPEED;
         rightSpeedSetpoint = BASE_SPEED;
@@ -644,37 +542,24 @@ void spin180Encoder(int dir) {
   double finalAnglePosition = 12.25;//12.4;
   double currentPosition = 0;
   move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
-  // right.setSpeed(dir * -TURNING_SPEED);
-  // left.setSpeed(dir * TURNING_SPEED);
-  int jitter = 1;
+  // int jitter = 1;
   unsigned long currentMillis = millis();
   while (finalAnglePosition - currentPosition > 0) {
-    // if (currentPosition/finalAnglePosition < 0.2) {
-    //   right.setSpeed(dir * -TURNING_SPEED * 0.5);
-    //   left.setSpeed(dir * TURNING_SPEED * 0.5);
-    // } else if (currentPosition/finalAnglePosition < 0.8) {
-    //   right.setSpeed(dir * -TURNING_SPEED);
-    //   left.setSpeed(dir * TURNING_SPEED);
-    // } else {
-    //   right.setSpeed(dir * -TURNING_SPEED * 0.5);
-    //   left.setSpeed(dir * TURNING_SPEED * 0.5);
-    // }
     double currentAngle = as5600_1.readAngle() / 4096.0 * 360;
     double deltaA = currentAngle - lastAngle;
     if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360;
     currentPosition += deltaA/360.0 * 6.28 * WHEEL_RADIUS;
     lastAngle = currentAngle;
-    if (millis() - currentMillis > 50) {
-      currentMillis = millis();
-      jitter *= -1;
-    }
-    if (jitter == 1) {
-      move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
-    }
-    if (jitter == -1) {
-      brake(false);
-    }
-    //delayMicroseconds(200);
+    // if (millis() - currentMillis > 50) {
+    //   currentMillis = millis();
+    //   jitter *= -1;
+    // }
+    // if (jitter == 1) {
+    //   move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
+    // }
+    // if (jitter == -1) {
+    //   brake(false);
+    // }
   }
   //spinBrake(1);
   // DRIVING = false;
@@ -719,16 +604,3 @@ int stationRightOrLeft(double station, int robotID) {
     return 0;
   }
 }
-
-//these may not be useful at all
-// void updateLocationRight() {
-//   if (m.getFacingDirection() == (1 - ROBOT_ID*2)) { // 1 - 0*2 = 1, 1 - 1*2 = -1
-//     m.location += m.getDrivingDirection();
-//   }
-// }
-
-// void updateLocationLeft() {
-//   if (m.getFacingDirection() == (-1 + ROBOT_ID*2)) {
-//     m.location -= m.getDrivingDirection();
-//   }
-// }

@@ -13,8 +13,6 @@ Motor::Motor(int _pinA, int _pinB, float _maxSpeed){
   digitalWrite(pinA, LOW);
   digitalWrite(pinB, LOW);
 
-  // analogWriteFrequency(pinA, 100);
-  // analogWriteFrequency(pinB, 100);
   ledcAttach(pinA, 250, 8);
   ledcAttach(pinB, 250, 8);
 
@@ -50,7 +48,6 @@ double Motor::averageSpeed() {
       newAverage = ((newAverage * (6.0 - outliers)) - speeds[i]) / (5.0 - outliers);
     }
   }
-  //Serial.println(newAverage);
   currentAverageSpeed = newAverage;
   return newAverage;
 };

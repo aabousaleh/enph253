@@ -49,12 +49,7 @@ Ingredient Map::getNextIngredient() {
 }
 
 void Map::nextRecipe() {
-  if (recipeIndex == 3) {
-    currentRecipeInstructions = endInstructions;
-    //currentRecipeLocations = endLocations;
-    //return;
-  } else {
-  Food nextRecipe = recipes[recipeIndex++];
+  Recipe nextRecipe = recipes[recipeIndex++];
   instructionIndex = 0;
   locationIndex = 0;
   ingredientIndex = 0;
@@ -78,11 +73,11 @@ void Map::nextRecipe() {
       break;
     }
     default: {
-
+      currentRecipeInstructions = endInstructions;
+      // currentRecipeLocations = cheeseLocations;
+      // currentRecipeIngredients = cheeseIngredients;
       break;
     }
-
-  }
   }
 }
 

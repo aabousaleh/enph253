@@ -40,12 +40,13 @@ enum Instruction {
   END
 };
 
-enum Food {
+enum Recipe {
   BURGER,
   DELUX_BURGER,
   SALAD,
   CHEESE_PLATE,
-  TEST
+  TEST,
+  END_RECIPE
 };
 
 enum Ingredient {

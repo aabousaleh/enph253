@@ -35,7 +35,7 @@ class Map{
     Instruction *currentRecipeInstructions;
     double *currentRecipeLocations;
     Ingredient *currentRecipeIngredients;
-    Food recipes[4] = {CHEESE_PLATE, CHEESE_PLATE, CHEESE_PLATE};
+    Recipe recipes[4] = {CHEESE_PLATE, CHEESE_PLATE, CHEESE_PLATE, END_RECIPE};
 
     //Burger
     Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, WAIT, GRAB, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, END};
