@@ -8,14 +8,14 @@
 #include <WiFi.h>
 
 // REPLACE WITH THE MAC Address of the other ESP32
-uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+uint8_t broadcastAddress[] = {0x64, 0xB7, 0x08, 0x9C, 0x65, 0x90}; //64:b7:08:9c:65:90 left robot
 
 long timeStart;
 long timeEnd;
 
-String dataToBeSent = "Hi, I am robot #0!"; //change for each esp
+char dataToBeSent[20] = "RK Robot 1 Message"; //change for each esp
 
-String dataReceived;
+char dataReceived[20] = "default 1 message";
 
 esp_now_peer_info_t peerInfo;
 
@@ -27,7 +27,9 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 // Callback when data is received
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-  memcpy(&dataReceived, incomingData, sizeof(dataReceived));
+  // Serial.print("Incoming Data as is: ");
+  // Serial.println(String(*incomingData));
+  memcpy(&dataReceived, incomingData, 20);
   Serial.print("Bytes received: ");
   Serial.println(len);
   Serial.println(dataReceived);
@@ -62,6 +64,7 @@ void setup() {
   }
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
+  delay(3000);
 }
  
 void loop() {
@@ -72,7 +75,7 @@ void loop() {
   timeEnd = micros();
    
   if (result == ESP_OK) {
-    Serial.println("Sent with success");
+    Serial.println("Sent with success, possible cap");
     Serial.print("Data received: ");
     Serial.println(dataReceived);
     Serial.println(timeEnd - timeStart);
@@ -80,4 +83,5 @@ void loop() {
   else {
     Serial.println("Error sending the data");
   }
+  delay(1000);
 }
