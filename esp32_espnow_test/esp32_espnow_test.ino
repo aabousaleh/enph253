@@ -27,7 +27,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 // Callback when data is received
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-  memcpy(&dataReceived, incomingData, sizeof(incomingReadings));
+  memcpy(&dataReceived, incomingData, sizeof(dataReceived));
   Serial.print("Bytes received: ");
   Serial.println(len);
   Serial.println(dataReceived);
@@ -68,7 +68,7 @@ void loop() {
 
   // Send message via ESP-NOW
   timeStart = micros();
-  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) dataToBeSent, sizeof(dataToBeSent));
+  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
   timeEnd = micros();
    
   if (result == ESP_OK) {
