@@ -1,5 +1,7 @@
 #include "arm.h"
 
+// Rudy was here
+
 //Don't edit unless you're Michael
 const float shoulderServoCoefficients[] = {
    7.13931823618486,-0.476879724058869,-0.504761425391325,0.0178792568111378,0.0573179013163423,-0.0174092462381695,-0.000137790695475793,
