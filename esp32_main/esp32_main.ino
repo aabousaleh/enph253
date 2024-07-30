@@ -7,6 +7,7 @@
 #include "map.h"
 //#include "movement.ino"
 #include "arm.h"
+#include "vacuum.h"
 
 // #include <WiFi.h>
 // #include <ESPmDNS.h>
@@ -75,6 +76,8 @@ Ingredient currentIngredient;
 float height = 11;
 float reach = 15;
 float grabbing = 0.075;
+
+Vacuum v;
 
 void setup() {
   
@@ -146,6 +149,11 @@ void setup() {
 
 void loop() {
   timeStart = millis();
+
+  // v.setSucc(true);
+  // delay(10000);
+  // v.setSucc(false);
+  // delay(5000);
   /*if (Serial.available() > 0){
     // char c = Serial.read();
     // switch (c) {
@@ -615,7 +623,6 @@ void equalSpeedSet(double speed) {
 
 void move(double rss, double lss) {
   left.setSpeed(lss * DRIVING);
-  //delay(10);
   right.setSpeed(rss * DRIVING);
 }
 
