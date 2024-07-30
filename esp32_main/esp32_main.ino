@@ -31,7 +31,7 @@ int BASE_SPEED = 600;
 double STEERING_CONSTANT = 0.2715;
 double TURNING_SPEED = 0.045 * MAX_SPEED;
 double ADJUSTING_SPEED = 0.05 * MAX_SPEED;
-int TURNING_DELAY = 855;
+int TURNING_DELAY = 1100;
 
 double dt = LOOP_INTERVAL / 1000.0; //in s
 unsigned long timeStart = 0; //for loop timing
@@ -145,213 +145,215 @@ void setup() {
 }
 
 void loop() {
-  timeStart = millis();
-  /*if (Serial.available() > 0){
-    // char c = Serial.read();
-    // switch (c) {
-    //   case 'P':
+  delay(3000);
+  spin180(1);
+  // timeStart = millis();
+  // /*if (Serial.available() > 0){
+  //   // char c = Serial.read();
+  //   // switch (c) {
+  //   //   case 'P':
 
-    // }
-    // GAIN_P = Serial.parseFloat();
-    // Read the incoming byte (assuming the data format is 'P I D')
-    String input = Serial.readStringUntil('\n');
-    // Split the input string into three parts (P, I, D)
-    int spaceIndex1 = input.indexOf(' ');
-    int spaceIndex2 = input.lastIndexOf(' ');
-    if (spaceIndex1 != -1 && spaceIndex2 != -1 && spaceIndex1 != spaceIndex2) {
-      // Extract P, I, D from the input string
-      String strP = input.substring(0, spaceIndex1);
-      String strI = input.substring(spaceIndex1 + 1, spaceIndex2);
-      String strD = input.substring(spaceIndex2 + 1);
+  //   // }
+  //   // GAIN_P = Serial.parseFloat();
+  //   // Read the incoming byte (assuming the data format is 'P I D')
+  //   String input = Serial.readStringUntil('\n');
+  //   // Split the input string into three parts (P, I, D)
+  //   int spaceIndex1 = input.indexOf(' ');
+  //   int spaceIndex2 = input.lastIndexOf(' ');
+  //   if (spaceIndex1 != -1 && spaceIndex2 != -1 && spaceIndex1 != spaceIndex2) {
+  //     // Extract P, I, D from the input string
+  //     String strP = input.substring(0, spaceIndex1);
+  //     String strI = input.substring(spaceIndex1 + 1, spaceIndex2);
+  //     String strD = input.substring(spaceIndex2 + 1);
       
-      // Convert strings to doubles
-      GAIN_P = strP.toDouble();
-      GAIN_I = strI.toDouble();
-      GAIN_D = strD.toDouble();
-    }
-    else {
-      // If the input format is incorrect
-      Serial.println("Invalid input format. Please enter 'P I D'.");
-    }
-  }*/
-  //TODO: alot
-  /*
-  1. Add interrupts for microswitches to freeze the robot
-  2. Communication
-  3. create log of recipe stack (to use for isReady)
-  4. figure out blocking
-  */
-
-  //receive status from other robot
-  if (timeStart - lastTime > LOOP_INTERVAL) {
-    switch (m.state) {
-      case MOVE: {
-        double rightCurrentAngle = as5600_0.readAngle() / 4096.0 * 360;
-        double leftCurrentAngle = as5600_1.readAngle() / 4096.0 * 360;
-        double rightDelta = (rightCurrentAngle - lastAngle_0);
-        double leftDelta = (leftCurrentAngle - lastAngle_1);
-        if (abs(rightDelta) > 180) rightDelta -= sign(rightDelta) * 360;
-        if (abs(leftDelta) > 180) leftDelta -= sign(leftDelta) * 360;
-        double deltaAngleAverage = (rightDelta + leftDelta)/2;
-        position += deltaAngleAverage/360.0 * 6.28 * WHEEL_RADIUS * m.getFacingDirection();
-        lastAngle_0 = rightCurrentAngle;
-        lastAngle_1 = leftCurrentAngle;
-        double distance = intendedPosition - position;
-        if (abs(distance) > 0.15) {
-          BASE_SPEED = abs(distance) > 10 ? 240 * sign(distance) * m.getFacingDirection() : 100 * sign(distance) * m.getFacingDirection();
-        
-          equalSpeedSet(BASE_SPEED);
-          // rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
-          // leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
-          // right.updateSpeeds(rightAngularSpeed);
-          // left.updateSpeeds(leftAngularSpeed);
-          // double rightAverageSpeed = right.averageSpeed();
-          // double leftAverageSpeed = left.averageSpeed();
-
-          lineSensingCorrection();
-          move(rightSpeedSetpoint, leftSpeedSetpoint);
-          //Serial.println("moving");
-          //updateEncoderPosition();
-
-          //Serial.print("Position:");
-          //Serial.print(position);
-          //Serial.print(",");
-          //Serial.print("Setpoint:");
-          //Serial.print(intendedPosition);
-          //Serial.print(",");
-          //Serial.print("Right_Angle:");
-          //Serial.print(rightCurrentAngle);
-          //Serial.print(",");
-          //Serial.print("Left_Angle:");
-          //Serial.print(leftCurrentAngle);
-          //Serial.print(",");
-          //Serial.print("deltaAngle:");
-          //Serial.println(deltaAngleAverage);
-
-        } else {
-          brake(false);
-          delay(500);
-          currentInstruction = m.getNextInstruction();
-          updateInstruction();
-          //delay(1000);
-          //attachInterrupt(digitalPinToInterrupt(stationToRead), stationInterrupt, RISING);
-          //m.state = ADJUST;
-          //Serial.println("going to adjust");
-        }
-        
-        lastTime = timeStart;
-        break;
-      }
-      case ADJUST: {
-        int stationToRead = stationRightOrLeft(intendedPosition, ROBOT_ID) * m.getFacingDirection() == 1 ? RS_TCRT : LS_TCRT;
-        if (!digitalRead(stationToRead)) {
-          equalSpeedSet(ADJUSTING_SPEED * sign(BASE_SPEED));
-          //lineSensingCorrection();
-          move(rightSpeedSetpoint, leftSpeedSetpoint);
-          //Serial.println("adjusting");
-          //Serial.println(rightSpeedSetpoint);
-          //updateEncoderPosition();
-        } else {
-        //   // double final = position + sign(rightSpeedSetpoint) * TAPE_WIDTH / 2.0;
-        //   // while (position != final) {
-        //   //   equalSpeedSet(ADJUSTING_SPEED / 2.0 * sign(rightSpeedSetpoint) * m.getFacingDirection());
-        //   //   move();
-        //   //   updateEncoderPosition();
-        //   // }
-        //   // currentInstruction = m.getNextInstruction();
-        //   // updateInstruction();
-          brake(false);
-          position = intendedPosition;
-          currentInstruction = m.getNextInstruction();
-          updateInstruction();
-          delay(1000);
-          // Serial.println("reached");
-        }
-        //brake(false);
-
-        break;
-      }
-      case SPIN: {
-        //Serial.println("spin");
-        spin180Encoder(1);
-        currentInstruction = m.getNextInstruction();
-        updateInstruction();
-        break;
-      }
-      case ARM: {
-        if (true) { //isReady to check that the other robot completed their task
-          if (currentInstruction == PLACE) {
-            place();
-            // if (abs(position - COOKTOP) < 1) {
-            //   //start timer
-            //   //broadcast it
-            // }
-          } else if (currentInstruction == GRAB) {
-            currentIngredient = m.getNextIngredient();\
-            grab(currentIngredient);
-            // if (abs(position - COOKTOP) < 1) {
-            //   //stop timer
-            //   //broadcast it
-            // }
-          }
-          //send status to other robot
-          delay(1000);
-          currentInstruction = m.getNextInstruction();
-          updateInstruction();
-        }
-
-        break;
-      }
-      case WAITING: {
-
-        break;
-      }
-      default: {
-
-        break;
-      }
-    }
-  } else {
-    dt = LOOP_INTERVAL / 1000.0;
-  }
-  delay(1);
-  // if (Serial.available() > 0) {
-  //   // Read the incoming byte
-  //   char incomingByte = Serial.read();
-  //   // Check which key was pressed
-  //   if (incomingByte == 'w') {
-  //     height += 0.2;
-  //     Serial.print("Height: ");
-  //     Serial.println(height);
-  //   } else if (incomingByte == 's') {
-  //     height -= 0.2;
-  //     Serial.print("Height: ");
-  //     Serial.println(height);
-  //   } else if (incomingByte == 'a') {
-  //     reach += 0.2;
-  //     Serial.print("Reach: ");
-  //     Serial.println(reach);
-  //   } else if (incomingByte == 'd') {
-  //     reach -= 0.2;
-  //     Serial.print("Reach: ");
-  //     Serial.println(reach);
-  //   } else if (incomingByte == 'q') {
-  //     digitalWrite(PUMP, HIGH);
-  //     Serial.println("Vacuum on");
-  //   } else if (incomingByte == 'e') {
-  //     digitalWrite(VALVE, HIGH);
-  //     digitalWrite(PUMP, LOW);
-  //     delay(100); //TODO: MIGHT NEED TO CHANGE THIS DELAY VALUE
-  //     digitalWrite(VALVE, LOW);
-  //     Serial.print("Vacuum off + solenoid");
+  //     // Convert strings to doubles
+  //     GAIN_P = strP.toDouble();
+  //     GAIN_I = strI.toDouble();
+  //     GAIN_D = strD.toDouble();
   //   }
+  //   else {
+  //     // If the input format is incorrect
+  //     Serial.println("Invalid input format. Please enter 'P I D'.");
+  //   }
+  // }*/
+  // //TODO: alot
+  // /*
+  // 1. Add interrupts for microswitches to freeze the robot
+  // 2. Communication
+  // 3. create log of recipe stack (to use for isReady)
+  // 4. figure out blocking
+  // */
+
+  // //receive status from other robot
+  // if (timeStart - lastTime > LOOP_INTERVAL) {
+  //   switch (m.state) {
+  //     case MOVE: {
+  //       double rightCurrentAngle = as5600_0.readAngle() / 4096.0 * 360;
+  //       double leftCurrentAngle = as5600_1.readAngle() / 4096.0 * 360;
+  //       double rightDelta = (rightCurrentAngle - lastAngle_0);
+  //       double leftDelta = (leftCurrentAngle - lastAngle_1);
+  //       if (abs(rightDelta) > 180) rightDelta -= sign(rightDelta) * 360;
+  //       if (abs(leftDelta) > 180) leftDelta -= sign(leftDelta) * 360;
+  //       double deltaAngleAverage = (rightDelta + leftDelta)/2;
+  //       position += deltaAngleAverage/360.0 * 6.28 * WHEEL_RADIUS * m.getFacingDirection();
+  //       lastAngle_0 = rightCurrentAngle;
+  //       lastAngle_1 = leftCurrentAngle;
+  //       double distance = intendedPosition - position;
+  //       if (abs(distance) > 0.15) {
+  //         BASE_SPEED = abs(distance) > 10 ? 240 * sign(distance) * m.getFacingDirection() : 100 * sign(distance) * m.getFacingDirection();
+        
+  //         equalSpeedSet(BASE_SPEED);
+  //         // rightAngularSpeed = getAngularSpeed(&as5600_0, 0);
+  //         // leftAngularSpeed = getAngularSpeed(&as5600_1, 1);
+  //         // right.updateSpeeds(rightAngularSpeed);
+  //         // left.updateSpeeds(leftAngularSpeed);
+  //         // double rightAverageSpeed = right.averageSpeed();
+  //         // double leftAverageSpeed = left.averageSpeed();
+
+  //         lineSensingCorrection();
+  //         move(rightSpeedSetpoint, leftSpeedSetpoint);
+  //         //Serial.println("moving");
+  //         //updateEncoderPosition();
+
+  //         //Serial.print("Position:");
+  //         //Serial.print(position);
+  //         //Serial.print(",");
+  //         //Serial.print("Setpoint:");
+  //         //Serial.print(intendedPosition);
+  //         //Serial.print(",");
+  //         //Serial.print("Right_Angle:");
+  //         //Serial.print(rightCurrentAngle);
+  //         //Serial.print(",");
+  //         //Serial.print("Left_Angle:");
+  //         //Serial.print(leftCurrentAngle);
+  //         //Serial.print(",");
+  //         //Serial.print("deltaAngle:");
+  //         //Serial.println(deltaAngleAverage);
+
+  //       } else {
+  //         brake(false);
+  //         delay(500);
+  //         currentInstruction = m.getNextInstruction();
+  //         updateInstruction();
+  //         //delay(1000);
+  //         //attachInterrupt(digitalPinToInterrupt(stationToRead), stationInterrupt, RISING);
+  //         //m.state = ADJUST;
+  //         //Serial.println("going to adjust");
+  //       }
+        
+  //       lastTime = timeStart;
+  //       break;
+  //     }
+  //     case ADJUST: {
+  //       int stationToRead = stationRightOrLeft(intendedPosition, ROBOT_ID) * m.getFacingDirection() == 1 ? RS_TCRT : LS_TCRT;
+  //       if (!digitalRead(stationToRead)) {
+  //         equalSpeedSet(ADJUSTING_SPEED * sign(BASE_SPEED));
+  //         //lineSensingCorrection();
+  //         move(rightSpeedSetpoint, leftSpeedSetpoint);
+  //         //Serial.println("adjusting");
+  //         //Serial.println(rightSpeedSetpoint);
+  //         //updateEncoderPosition();
+  //       } else {
+  //       //   // double final = position + sign(rightSpeedSetpoint) * TAPE_WIDTH / 2.0;
+  //       //   // while (position != final) {
+  //       //   //   equalSpeedSet(ADJUSTING_SPEED / 2.0 * sign(rightSpeedSetpoint) * m.getFacingDirection());
+  //       //   //   move();
+  //       //   //   updateEncoderPosition();
+  //       //   // }
+  //       //   // currentInstruction = m.getNextInstruction();
+  //       //   // updateInstruction();
+  //         brake(false);
+  //         position = intendedPosition;
+  //         currentInstruction = m.getNextInstruction();
+  //         updateInstruction();
+  //         delay(1000);
+  //         // Serial.println("reached");
+  //       }
+  //       //brake(false);
+
+  //       break;
+  //     }
+  //     case SPIN: {
+  //       //Serial.println("spin");
+  //       spin180Encoder(1);
+  //       currentInstruction = m.getNextInstruction();
+  //       updateInstruction();
+  //       break;
+  //     }
+  //     case ARM: {
+  //       if (true) { //isReady to check that the other robot completed their task
+  //         if (currentInstruction == PLACE) {
+  //           place();
+  //           // if (abs(position - COOKTOP) < 1) {
+  //           //   //start timer
+  //           //   //broadcast it
+  //           // }
+  //         } else if (currentInstruction == GRAB) {
+  //           currentIngredient = m.getNextIngredient();\
+  //           grab(currentIngredient);
+  //           // if (abs(position - COOKTOP) < 1) {
+  //           //   //stop timer
+  //           //   //broadcast it
+  //           // }
+  //         }
+  //         //send status to other robot
+  //         delay(1000);
+  //         currentInstruction = m.getNextInstruction();
+  //         updateInstruction();
+  //       }
+
+  //       break;
+  //     }
+  //     case WAITING: {
+
+  //       break;
+  //     }
+  //     default: {
+
+  //       break;
+  //     }
+  //   }
+  // } else {
+  //   dt = LOOP_INTERVAL / 1000.0;
   // }
-  //moveToXY(reach, height);
-  //ledcWrite(CLAW_SERVO, (1<<SERVO_PWM_RESOLUTION) * grabbing);
-  // grab(cheese);
-  // delay(1000);
-  // place();
-  // delay(5000);
+  // delay(1);
+  // // if (Serial.available() > 0) {
+  // //   // Read the incoming byte
+  // //   char incomingByte = Serial.read();
+  // //   // Check which key was pressed
+  // //   if (incomingByte == 'w') {
+  // //     height += 0.2;
+  // //     Serial.print("Height: ");
+  // //     Serial.println(height);
+  // //   } else if (incomingByte == 's') {
+  // //     height -= 0.2;
+  // //     Serial.print("Height: ");
+  // //     Serial.println(height);
+  // //   } else if (incomingByte == 'a') {
+  // //     reach += 0.2;
+  // //     Serial.print("Reach: ");
+  // //     Serial.println(reach);
+  // //   } else if (incomingByte == 'd') {
+  // //     reach -= 0.2;
+  // //     Serial.print("Reach: ");
+  // //     Serial.println(reach);
+  // //   } else if (incomingByte == 'q') {
+  // //     digitalWrite(PUMP, HIGH);
+  // //     Serial.println("Vacuum on");
+  // //   } else if (incomingByte == 'e') {
+  // //     digitalWrite(VALVE, HIGH);
+  // //     digitalWrite(PUMP, LOW);
+  // //     delay(100); //TODO: MIGHT NEED TO CHANGE THIS DELAY VALUE
+  // //     digitalWrite(VALVE, LOW);
+  // //     Serial.print("Vacuum off + solenoid");
+  // //   }
+  // // }
+  // //moveToXY(reach, height);
+  // //ledcWrite(CLAW_SERVO, (1<<SERVO_PWM_RESOLUTION) * grabbing);
+  // // grab(cheese);
+  // // delay(1000);
+  // // place();
+  // // delay(5000);
 }
 
 void grab(Ingredient i) {
@@ -657,16 +659,16 @@ void spin180Encoder(int dir) {
     if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360;
     currentPosition += deltaA/360.0 * 6.28 * WHEEL_RADIUS;
     lastAngle = currentAngle;
-    if (millis() - currentMillis > 50) {
-      currentMillis = millis();
-      jitter *= -1;
-    }
-    if (jitter == 1) {
-      move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
-    }
-    if (jitter == -1) {
-      brake(false);
-    }
+    // if (millis() - currentMillis > 50) {
+    //   currentMillis = millis();
+    //   jitter *= -1;
+    // }
+    // if (jitter == 1) {
+    //   move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
+    // }
+    // if (jitter == -1) {
+    //   brake(false);
+    // }
     //delayMicroseconds(200);
   }
   //spinBrake(1);
@@ -682,16 +684,18 @@ void spin180Encoder(int dir) {
 
 //dir: 1 CW, -1 CCW
 void spin180(int dir) {
+  move(-MAX_SPEED, MAX_SPEED);
+  delay(10);
   right.setSpeed(dir * -TURNING_SPEED);
-  left.setSpeed(dir * TURNING_SPEED*1.10);
+  left.setSpeed(dir * TURNING_SPEED);
   delay(TURNING_DELAY);
   spinBrake(dir);
   m.flipFacingDirection();
 }
 
 void spinBrake(int dir) {
-  right.setSpeed(dir * TURNING_SPEED / 7.5);
-  left.setSpeed(dir * -TURNING_SPEED / 5.0);
+  right.setSpeed(dir * TURNING_SPEED / 3.0);
+  left.setSpeed(dir * -TURNING_SPEED / 3.0);
   delay(10);
   right.setSpeed(0);
   left.setSpeed(0);
