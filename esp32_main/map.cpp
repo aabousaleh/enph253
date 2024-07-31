@@ -4,6 +4,7 @@ Map::Map() {
   // location = 0;
   facingDirection = -1;
   drivingDirection = 1;
+  movingDirection = 1;
   locationIndex = 0;
   instructionIndex = 0;
   ingredientIndex =
@@ -21,8 +22,12 @@ int Map::getDrivingDirection() {
 
 //TODO: consider making drivingDirection dependent on moving direction (we know where we want to go based on position, we send driving direction instruction based on that and facing direction: D = M/F)
 int Map::getMovingDirection() {
-  return facingDirection * drivingDirection;
+  return movingDirection;
 };
+
+void Map::setMovingDirection(int dir) {
+  movingDirection = dir;
+}
 
 State Map::getState() {
   return state;

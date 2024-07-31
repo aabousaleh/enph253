@@ -11,6 +11,7 @@ class Map{
     int getFacingDirection(); //1 is to the right, -1 is to the left
     int getDrivingDirection(); //1 is forward, -1 is backward
     int getMovingDirection(); //1 is moving right, -1 is moving left
+    void setMovingDirection(int dir);
     // int getLocation(); //5 total locations, separated by black tape lines on middle row stations
     void flipFacingDirection(); //flips facing direction
     void flipDrivingDirection(); //flips driving direction
@@ -28,6 +29,7 @@ class Map{
   protected:
     int facingDirection;
     int drivingDirection;
+    int movingDirection;
     int locationIndex;
     int instructionIndex;
     int ingredientIndex;
@@ -45,7 +47,7 @@ class Map{
 
     //cheese
     Instruction cheeseInstructions[15] = {GO, GRAB, TURN, GO, PLACE, GRAB, TURN, GO, PLACE, END};
-    double cheeseLocations[5] = {CHEESE, PLATES, SERVING};
+    double cheeseLocations[5] = {CHEESE, COOKTOP, SERVING};
     Ingredient cheeseIngredients[2] = {cheese, plate};
 
     //Test
