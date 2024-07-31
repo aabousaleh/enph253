@@ -1,5 +1,7 @@
 /**
- * Line following seems consistent across different battery voltages (not tested extensively just a vibe check)
+ * Started tuning spin function with battery at 16.1 V, ended at 15.8 V
+ * Need right wheel to turn more to have centre of rotation be in the middle for CCW turn
+ * Need to punch in at max speed at the start of each turn to overcome wonky motor response
  */
 
 #include <WiFi.h>
@@ -34,10 +36,10 @@ unsigned long timeStart = 0;
 unsigned long lastTime = 0;
 
 const double MAX_SPEED = 1000.0;
-int rightSpeed = 240;   //max: 1000
-int leftSpeed = 240;
-int drivingTime = 6000;
-int correction = 150;   //forward: 65       back: 150
+double TURNING_SPEED = 0.045 * MAX_SPEED;
+int TURNING_DELAY = 910;    //CW turn: 900  CCW turn: 910
+int rightMotorOffset = 10;   //CCW turn: 10
+int leftMotorOffset = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -111,35 +113,19 @@ void loop() {
   }
 
   if (RemoteClient.available() > 0) {
-    correction = RemoteClient.parseInt();
+    rightMotorOffset = RemoteClient.parseInt();
   }
 
-  RemoteClient.println(correction);
+  RemoteClient.println(rightMotorOffset);
 
-  timeStart = millis();
-  if (timeStart < drivingTime) {
-    //line sensing:
-    double fr = analogRead(FR_TCRT);
-    double fl = analogRead(FL_TCRT);
-    double br = analogRead(BR_TCRT);
-    double bl = analogRead(BL_TCRT);
-
-    int front_correction = (fr - fl);
-    int back_correction = (bl - br);
-
-    if (front_correction > 0) {
-      rightSpeed -= correction;
-    }
-    else if (front_correction < 0) {
-      leftSpeed -= correction;
-    }
-
-    setSpeed(rightSpeed, leftSpeed);
-
-  } else {
-    stop();
-  }
-  // printTCRT(fr, fl, br, bl);
+  setSpeed(MAX_SPEED, -MAX_SPEED);
+  delay(50);
+  setSpeed(TURNING_SPEED + rightMotorOffset, -TURNING_SPEED);
+  delay(TURNING_DELAY);
+  setSpeed(-MAX_SPEED, MAX_SPEED);
+  delay(10);
+  stop();
+  delay(3000);
 }
 
 void setRightSpeed(int rightSpeed) {
@@ -174,6 +160,21 @@ void stop() {
   ledcWrite(PWM_RIGHT_2, 0);
   ledcWrite(PWM_LEFT_1, 0);
   ledcWrite(PWM_LEFT_2, 0);
+}
+
+//dir: 1 CW, -1 CCW
+void spin180(int dir) {
+  setSpeed(dir * -MAX_SPEED, dir * MAX_SPEED);
+  delay(10);
+  setSpeed(dir * -TURNING_SPEED, dir * TURNING_SPEED);
+  delay(TURNING_DELAY);
+  spinBrake(dir);
+}
+
+void spinBrake(int dir) {
+  setSpeed(dir * TURNING_SPEED / 3.0, dir * -TURNING_SPEED / 3.0);
+  delay(10);
+  stop();
 }
 
 void printTRCT(double _fr, double _fl, double _br, double _bl) {
