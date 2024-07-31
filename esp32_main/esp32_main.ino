@@ -31,7 +31,7 @@ const int MAX_SPEED = 1000;
 int BASE_SPEED = 600;
 double STEERING_CONSTANT = 0.2715;
 double TURNING_SPEED = 0.045 * MAX_SPEED;
-double ADJUSTING_SPEED = 0.05 * MAX_SPEED;
+double ADJUSTING_SPEED = 0.04 * MAX_SPEED;
 int TURNING_DELAY = 855;
 
 double dt = LOOP_INTERVAL / 1000.0; //in s
@@ -57,7 +57,7 @@ Error leftPositionError(4096);
 Motor left(PWM_LEFT_1, PWM_LEFT_2, MAX_SPEED);
 double leftAngularSpeed;
 
-volatile double position = 0;
+volatile double position = CHEESE;
 
 int LAST_TURN = 0;
 
@@ -70,6 +70,8 @@ float reach = 15;
 float grabbing = 0.075;
 
 Vacuum v;
+
+int blackTapeCounter = 0;
 
 void setup() {
   
@@ -96,9 +98,6 @@ void setup() {
 
   digitalWrite(PUMP, LOW);
   digitalWrite(VALVE, LOW);
-
-  // attachInterrupt(digitalPinToInterrupt(RS_TCRT), rightStationInterrupt, CHANGE);
-  // attachInterrupt(digitalPinToInterrupt(LS_TCRT), leftStationInterrupt, CHANGE);
 
   //initialize the i2c busses
   Wire.begin(I2C_SDA0, I2C_SCL0);
@@ -183,65 +182,79 @@ void loop() {
     lastTime = timeStart;
     switch (m.state) {
       case MOVE: {
-        double rightCurrentAngle = as5600_0.readAngle() / 4096.0 * 360;
-        double leftCurrentAngle = as5600_1.readAngle() / 4096.0 * 360;
-        double rightDelta = (rightCurrentAngle - lastAngle_0);
-        double leftDelta = (leftCurrentAngle - lastAngle_1);
-        if (abs(rightDelta) > 180) rightDelta -= sign(rightDelta) * 360;
-        if (abs(leftDelta) > 180) leftDelta -= sign(leftDelta) * 360;
-        double deltaAngleAverage = (rightDelta + leftDelta)/2;
-        position += deltaAngleAverage/360.0 * 6.28 * WHEEL_RADIUS * m.getFacingDirection();
-        lastAngle_0 = rightCurrentAngle;
-        lastAngle_1 = leftCurrentAngle;
-        double distance = intendedPosition - position;
-        if (abs(distance) > 3) {
-          BASE_SPEED = abs(distance) > 10 ? 240 * sign(distance) * m.getFacingDirection() : 100 * sign(distance) * m.getFacingDirection();
-          equalSpeedSet(BASE_SPEED);
-          lineSensingCorrection();
-          move(rightSpeedSetpoint, leftSpeedSetpoint);
+        if (position == intendedPosition) {
+          currentInstruction = m.getNextInstruction();
+          updateInstruction();
         } else {
-          m.setMovingDirection(sign(BASE_SPEED));
-          brake(false);
-          // delay(500);
-          // currentInstruction = m.getNextInstruction();
-          // updateInstruction();
-          delay(1000);
-          //int stationToRead = stationRightOrLeft(intendedPosition, ROBOT_ID) * m.getFacingDirection() == 1 ? RS_TCRT : LS_TCRT;
-          //attachInterrupt(digitalPinToInterrupt(LS_TCRT), stationInterrupt, RISING);
-          m.state = ADJUST;
-          // Serial.println("going to adjust");
+          double rightCurrentAngle = as5600_0.readAngle() / 4096.0 * 360;
+          double leftCurrentAngle = as5600_1.readAngle() / 4096.0 * 360;
+          double rightDelta = (rightCurrentAngle - lastAngle_0);
+          double leftDelta = (leftCurrentAngle - lastAngle_1);
+          if (abs(rightDelta) > 180) rightDelta -= sign(rightDelta) * 360;
+          if (abs(leftDelta) > 180) leftDelta -= sign(leftDelta) * 360;
+          double deltaAngleAverage = (rightDelta + leftDelta)/2;
+          position += deltaAngleAverage/360.0 * 6.28 * WHEEL_RADIUS * m.getFacingDirection();
+          lastAngle_0 = rightCurrentAngle;
+          lastAngle_1 = leftCurrentAngle;
+          double distance = intendedPosition - position;
+          //Serial.print("leftstation in move: ");
+          //Serial.println(digitalRead(LS_TCRT));
+          if (abs(distance) > 4) {
+            BASE_SPEED = abs(distance) > 10 ? 240 * sign(distance) * m.getFacingDirection() : 100 * sign(distance) * m.getFacingDirection();
+            equalSpeedSet(BASE_SPEED);
+            lineSensingCorrection();
+            move(rightSpeedSetpoint, leftSpeedSetpoint);
+          } else {
+            m.setMovingDirection(sign(BASE_SPEED));
+            brake(false);
+            delay(250);
+            // currentInstruction = m.getNextInstruction();
+            // updateInstruction();
+            //delay(1000);
+            //int stationToRead = stationRightOrLeft(intendedPosition, ROBOT_ID) * m.getFacingDirection() == 1 ? RS_TCRT : LS_TCRT;
+            //attachInterrupt(digitalPinToInterrupt(LS_TCRT), stationInterrupt, RISING);
+            m.state = ADJUST;
+            // Serial.println("going to adjust");
+          }
         }
         break;
       }
       case ADJUST: {
-        equalSpeedSet(ADJUSTING_SPEED * m.getMovingDirection());
-        //lineSensingCorrection();
-        move(rightSpeedSetpoint, leftSpeedSetpoint);
-        if (digitalRead(LS_TCRT)) {
-        //   equalSpeedSet(ADJUSTING_SPEED * sign(BASE_SPEED));
-        //   //lineSensingCorrection();
-        //   move(rightSpeedSetpoint, leftSpeedSetpoint);
-        //   //Serial.println("adjusting");
-        //   //Serial.println(rightSpeedSetpoint);
-        //   //updateEncoderPosition();
-        // } else {
-        // //   // double final = position + sign(rightSpeedSetpoint) * TAPE_WIDTH / 2.0;
-        // //   // while (position != final) {
-        // //   //   equalSpeedSet(ADJUSTING_SPEED / 2.0 * sign(rightSpeedSetpoint) * m.getFacingDirection());
-        // //   //   move();
-        // //   //   updateEncoderPosition();
-        // //   // }
-        // //   // currentInstruction = m.getNextInstruction();
-        // //   // updateInstruction();
-          brake(false);
-          position = intendedPosition;
+        if (intendedPosition == SERVING) {
           currentInstruction = m.getNextInstruction();
           updateInstruction();
-        //   delay(1000);
-        //   // Serial.println("reached");
+        } else {
+          int ls = digitalRead(LS_TCRT);
+          if (ls == 1) blackTapeCounter++;
+          if (ls == 0) blackTapeCounter = 0;
+          //Serial.print("leftstation in adjust: ");
+          //Serial.println(ls);
+          equalSpeedSet(ADJUSTING_SPEED * m.getMovingDirection());
+          lineSensingCorrection();
+          move(rightSpeedSetpoint, leftSpeedSetpoint);
+          if (blackTapeCounter >= 3) {
+            //Serial.println("on tape");
+          //   equalSpeedSet(ADJUSTING_SPEED * sign(BASE_SPEED));
+          //   //lineSensingCorrection();
+          //   move(rightSpeedSetpoint, leftSpeedSetpoint);
+          //   //Serial.println("adjusting");
+          //   //Serial.println(rightSpeedSetpoint);
+          // } else {
+          // //   // double final = position + sign(rightSpeedSetpoint) * TAPE_WIDTH / 2.0;
+          // //   // while (position != final) {
+          // //   //   equalSpeedSet(ADJUSTING_SPEED / 2.0 * sign(rightSpeedSetpoint) * m.getFacingDirection());
+          // //   //   move();
+          // //   // }
+          // //   // currentInstruction = m.getNextInstruction();
+          // //   // updateInstruction();
+            brake(true);
+            position = intendedPosition;
+            currentInstruction = m.getNextInstruction();
+            updateInstruction();
+          //   delay(1000);
+          //   // Serial.println("reached");
+          }
         }
-        //brake(false);
-
         break;
       }
       case SPIN: {
@@ -380,18 +393,11 @@ void place() {
   }
 }
 
-//deprecated
-void updateEncoderPosition() {
-  position += m.getFacingDirection() * (right.currentAverageSpeed + left.currentAverageSpeed)/720.0 * dt * WHEEL_RADIUS * 6.28; //dt here is update rate (period)
-}
-
 void updateInstruction() {
   switch (currentInstruction) {
     case GO: {
       intendedPosition = m.getNextLocation();
       m.state = MOVE;
-      // attachInterrupt(digitalPinToInterrupt(RS_TCRT), rightStationInterrupt, RISING);
-      // attachInterrupt(digitalPinToInterrupt(LS_TCRT), leftStationInterrupt, RISING);
       break;
     }
     case GRAB: {
@@ -428,14 +434,6 @@ void updateInstruction() {
       //if it does... die...?
     }
   }
-}
-
-void stationInterrupt() {
-  brake(true);
-  position = intendedPosition;
-  //m.state = WAITING;
-  currentInstruction = m.getNextInstruction();
-  updateInstruction();
 }
 
 //returns angular speed in degrees/second
@@ -529,23 +527,21 @@ void move(double rss, double lss) {
 
 void brake(bool useBackdrive) {
   if (useBackdrive) {
-    equalSpeedSet(-BASE_SPEED / 2.5);
+    equalSpeedSet(-BASE_SPEED / 2);
     move(rightSpeedSetpoint, leftSpeedSetpoint);
     // right.setSpeed(rightSpeedSetpoint);
     // left.setSpeed(leftSpeedSetpoint);
-    delay(20);
+    delay(10);
   }
   move(0,0);
-  right.clearSpeeds();
-  left.clearSpeeds();
 }
 
 void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
-  double finalAnglePosition = 12.25;//12.4;
+  double finalAnglePosition = 12.4;//12.4;
   double currentPosition = 0;
-  move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
-  int jitter = 1;
+  move(dir * -TURNING_SPEED * 1.5, dir * TURNING_SPEED * 0.945);
+  //int jitter = 1;
   unsigned long currentMillis = millis();
   while (finalAnglePosition - currentPosition > 0) {
     double currentAngle = as5600_1.readAngle() / 4096.0 * 360;
@@ -553,16 +549,16 @@ void spin180Encoder(int dir) {
     if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360;
     currentPosition += deltaA/360.0 * 6.28 * WHEEL_RADIUS;
     lastAngle = currentAngle;
-    if (millis() - currentMillis > 50) {
-      currentMillis = millis();
-      jitter *= -1;
-    }
-    if (jitter == 1) {
-      move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
-    }
-    if (jitter == -1) {
-      brake(false);
-    }
+    // if (millis() - currentMillis > 50) {
+    //   currentMillis = millis();
+    //   jitter *= -1;
+    // }
+    // if (jitter == 1) {
+    //   move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
+    // }
+    // if (jitter == -1) {
+    //   brake(false);
+    // }
   }
   //spinBrake(1);
   // DRIVING = false;
