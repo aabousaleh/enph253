@@ -128,6 +128,11 @@ void loop() {
   delay(3000);
 }
 
+/**
+ * Sets speeds of right motor (maps speed to PWM).
+ * 
+ * @param: 'rightSpeed' - desired speed of right motor.
+ */
 void setRightSpeed(int rightSpeed) {
   int pwm = (abs(rightSpeed) < MAX_SPEED) ? (rightSpeed / MAX_SPEED) * 255.0 : 255 * rightSpeed / abs(rightSpeed);
   if (pwm >= 0) {
@@ -139,6 +144,11 @@ void setRightSpeed(int rightSpeed) {
   }
 }
 
+/**
+ * Sets speeds of left motor (maps speed to PWM).
+ * 
+ * @param: 'leftSpeed' - desired speed of left motor.
+ */
 void setLeftSpeed(int leftSpeed) {
   int pwm = (abs(leftSpeed) < MAX_SPEED) ? (leftSpeed / MAX_SPEED) * 255.0 : 255 * leftSpeed / abs(leftSpeed);
   if (pwm >= 0) {
@@ -150,11 +160,20 @@ void setLeftSpeed(int leftSpeed) {
   }
 }
 
+/**
+ * Sets speeds of right and left motors (maps speed to PWM).
+ * 
+ * @param: 'rightSpeed' - desired speed of right motor.
+ * @param: 'leftSpeed' - desired speed of left motor.
+ */
 void setSpeed(int rightSpeed, int leftSpeed) {
   setRightSpeed(rightSpeed);
   setLeftSpeed(leftSpeed);
 }
 
+/**
+ * Sets both motors to 0 PWM (no braking).
+ */
 void stop() {
   ledcWrite(PWM_RIGHT_1, 0);
   ledcWrite(PWM_RIGHT_2, 0);
@@ -177,6 +196,14 @@ void spinBrake(int dir) {
   stop();
 }
 
+/**
+ * Prints raw analog read values of TCRTs.
+ * 
+ * @param: '_fr' - front right TCRT output.
+ * @param: '_fl' - front left TCRT output.
+ * @param: '_br' - back right TCRT output.
+ * @param: '_bl' - back left TCRT output.
+ */
 void printTRCT(double _fr, double _fl, double _br, double _bl) {
   Serial.print("Frontright:");
   Serial.print(_fr);
