@@ -200,14 +200,14 @@ void loop() {
           lineSensingCorrection();
           move(rightSpeedSetpoint, leftSpeedSetpoint);
         } else {
-          m.setMovingDirection(sign(distance));
+          m.setMovingDirection(sign(BASE_SPEED));
           brake(false);
           // delay(500);
           // currentInstruction = m.getNextInstruction();
           // updateInstruction();
           delay(1000);
           //int stationToRead = stationRightOrLeft(intendedPosition, ROBOT_ID) * m.getFacingDirection() == 1 ? RS_TCRT : LS_TCRT;
-          attachInterrupt(digitalPinToInterrupt(LS_TCRT), stationInterrupt, RISING);
+          //attachInterrupt(digitalPinToInterrupt(LS_TCRT), stationInterrupt, RISING);
           m.state = ADJUST;
           // Serial.println("going to adjust");
         }
@@ -215,7 +215,9 @@ void loop() {
       }
       case ADJUST: {
         equalSpeedSet(ADJUSTING_SPEED * m.getMovingDirection());
-        // if (!digitalRead(stationToRead)) {
+        //lineSensingCorrection();
+        move(rightSpeedSetpoint, leftSpeedSetpoint);
+        if (digitalRead(LS_TCRT)) {
         //   equalSpeedSet(ADJUSTING_SPEED * sign(BASE_SPEED));
         //   //lineSensingCorrection();
         //   move(rightSpeedSetpoint, leftSpeedSetpoint);
@@ -231,13 +233,13 @@ void loop() {
         // //   // }
         // //   // currentInstruction = m.getNextInstruction();
         // //   // updateInstruction();
-        //   brake(true);
-        //   position = intendedPosition;
-        //   currentInstruction = m.getNextInstruction();
-        //   updateInstruction();
+          brake(false);
+          position = intendedPosition;
+          currentInstruction = m.getNextInstruction();
+          updateInstruction();
         //   delay(1000);
         //   // Serial.println("reached");
-        // }
+        }
         //brake(false);
 
         break;
