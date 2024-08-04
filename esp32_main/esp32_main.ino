@@ -28,11 +28,11 @@ AS5600 as5600_1(&Wire1);
 
 //Speed constants
 const int MAX_SPEED = 1000;
-int BASE_SPEED = 600;
-double STEERING_CONSTANT = 0.2715;
-double TURNING_SPEED = 0.045 * MAX_SPEED;
-double ADJUSTING_SPEED = 0.04 * MAX_SPEED;
-int TURNING_DELAY = 855;
+int BASE_SPEED = 950;
+double STEERING_CONSTANT = 0.375;
+double TURNING_SPEED = 0.10 * MAX_SPEED;
+double ADJUSTING_SPEED = 0.15 * MAX_SPEED;
+int TURNING_DELAY = 500;
 
 double dt = LOOP_INTERVAL / 1000.0; //in s
 unsigned long timeStart = 0; //for loop timing
@@ -197,23 +197,27 @@ void loop() {
           lastAngle_0 = rightCurrentAngle;
           lastAngle_1 = leftCurrentAngle;
           double distance = intendedPosition - position;
-          //Serial.print("leftstation in move: ");
-          //Serial.println(digitalRead(LS_TCRT));
-          if (abs(distance) > 4) {
-            BASE_SPEED = abs(distance) > 10 ? 240 * sign(distance) * m.getFacingDirection() : 100 * sign(distance) * m.getFacingDirection();
-            equalSpeedSet(BASE_SPEED);
+          m.setMovingDirection(sign(distance));
+          if ( abs(distance) > 1) {
+            // BASE_SPEED = 650 * m.getDrivingDirection();//abs(distance) > 10 ? 240 * m.getDrivingDirection() : 100 * m.getDrivingDirection();
+            equalSpeedSet(BASE_SPEED * m.getDrivingDirection());
             lineSensingCorrection();
             move(rightSpeedSetpoint, leftSpeedSetpoint);
           } else {
-            m.setMovingDirection(sign(BASE_SPEED));
-            brake(false);
-            delay(250);
-            // currentInstruction = m.getNextInstruction();
-            // updateInstruction();
+            // BASE_SPEED = 90 * m.getDrivingDirection();
+            brake(true);
+            // equalSpeedSet(ADJUSTING_SPEED);
+            // move(rightSpeedSetpoint, leftSpeedSetpoint);
+            // brake(false);
+            // delay(250);
+            delay(500);
+            currentInstruction = m.getNextInstruction();
+            updateInstruction();
             //delay(1000);
             //int stationToRead = stationRightOrLeft(intendedPosition, ROBOT_ID) * m.getFacingDirection() == 1 ? RS_TCRT : LS_TCRT;
             //attachInterrupt(digitalPinToInterrupt(LS_TCRT), stationInterrupt, RISING);
-            m.state = ADJUST;
+            //m.state = ADJUST;
+            //delay(500);
             // Serial.println("going to adjust");
           }
         }
@@ -221,6 +225,7 @@ void loop() {
       }
       case ADJUST: {
         if (intendedPosition == SERVING) {
+          brake(true);
           currentInstruction = m.getNextInstruction();
           updateInstruction();
         } else {
@@ -229,10 +234,10 @@ void loop() {
           if (ls == 0) blackTapeCounter = 0;
           //Serial.print("leftstation in adjust: ");
           //Serial.println(ls);
-          equalSpeedSet(ADJUSTING_SPEED * m.getMovingDirection());
+          equalSpeedSet(ADJUSTING_SPEED * m.getDrivingDirection());
           lineSensingCorrection();
           move(rightSpeedSetpoint, leftSpeedSetpoint);
-          if (blackTapeCounter >= 3) {
+          if (blackTapeCounter >= 2) {
             //Serial.println("on tape");
           //   equalSpeedSet(ADJUSTING_SPEED * sign(BASE_SPEED));
           //   //lineSensingCorrection();
@@ -251,6 +256,7 @@ void loop() {
             position = intendedPosition;
             currentInstruction = m.getNextInstruction();
             updateInstruction();
+            blackTapeCounter = 0;
           //   delay(1000);
           //   // Serial.println("reached");
           }
@@ -265,6 +271,10 @@ void loop() {
         break;
       }
       case ARM: {
+        delay(500);
+        currentInstruction = m.getNextInstruction();
+        updateInstruction();
+        break;
         if (true) { //isReady to check that the other robot completed their task
           if (currentInstruction == PLACE) {
             place();
@@ -273,7 +283,7 @@ void loop() {
             //   //broadcast it
             // }
           } else if (currentInstruction == GRAB) {
-            currentIngredient = m.getNextIngredient();\
+            currentIngredient = m.getNextIngredient();
             grab(currentIngredient);
             // if (abs(position - COOKTOP) < 1) {
             //   //stop timer
@@ -473,7 +483,7 @@ void lineSensingCorrection() {
 
   //1 means right, -1 means left, 0 means straight
   if (BASE_SPEED != 0) {
-    if (m.getDrivingDirection() == 1 && BASE_SPEED > 0) {
+    if (m.getDrivingDirection() == 1) {
       if (fr < 4000 && fl < 4000) OFF_THE_LINE = true;
       if (front_correction > 0 || (OFF_THE_LINE && (LAST_TURN == 1))) {
         rightSpeedSetpoint = BASE_SPEED * (1.0 - (STEERING_CONSTANT));
@@ -527,40 +537,47 @@ void move(double rss, double lss) {
 
 void brake(bool useBackdrive) {
   if (useBackdrive) {
-    equalSpeedSet(-BASE_SPEED / 2);
-    move(rightSpeedSetpoint, leftSpeedSetpoint);
+    move(0,0);
+    delay(10);
+    //equalSpeedSet(-BASE_SPEED / 2);
+    move(-rightSpeedSetpoint, -leftSpeedSetpoint);
     // right.setSpeed(rightSpeedSetpoint);
     // left.setSpeed(leftSpeedSetpoint);
-    delay(10);
+    delay(20);
   }
   move(0,0);
 }
 
 void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
-  double finalAnglePosition = 12.4;//12.4;
+  double finalAnglePosition = 10.15;//12.4;
   double currentPosition = 0;
-  move(dir * -TURNING_SPEED * 1.5, dir * TURNING_SPEED * 0.945);
-  //int jitter = 1;
+  move(dir * -TURNING_SPEED, dir * TURNING_SPEED * 1.15);
+  int jitter = 0;
   unsigned long currentMillis = millis();
   while (finalAnglePosition - currentPosition > 0) {
     double currentAngle = as5600_1.readAngle() / 4096.0 * 360;
     double deltaA = currentAngle - lastAngle;
     if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360;
-    currentPosition += deltaA/360.0 * 6.28 * WHEEL_RADIUS;
+    currentPosition += deltaA/360.0 * 6.28 * WHEEL_RADIUS * dir;
     lastAngle = currentAngle;
     // if (millis() - currentMillis > 50) {
     //   currentMillis = millis();
     //   jitter *= -1;
     // }
     // if (jitter == 1) {
-    //   move(dir * -TURNING_SPEED * 1.4, dir * TURNING_SPEED * 0.955);
+    //   move(dir * -TURNING_SPEED, dir * TURNING_SPEED);
     // }
     // if (jitter == -1) {
     //   brake(false);
     // }
   }
-  //spinBrake(1);
+  // double fr = analogRead(FR_TCRT);
+  // while (fr < 4090) {
+  //   move(dir * -TURNING_SPEED * 0.65, dir * TURNING_SPEED * 0.65);
+  //   fr = analogRead(FR_TCRT);
+  // }
+  // //spinBrake(1);
   // DRIVING = false;
   // brake();
   // DRIVING = true;
@@ -573,10 +590,13 @@ void spin180Encoder(int dir) {
 
 //dir: 1 CW, -1 CCW
 void spin180(int dir) {
-  right.setSpeed(dir * -TURNING_SPEED);
-  left.setSpeed(dir * TURNING_SPEED*1.10);
+  move(dir * -TURNING_SPEED, dir * TURNING_SPEED * 1.15);
   delay(TURNING_DELAY);
-  spinBrake(dir);
+  int ls = digitalRead(LS_TCRT);
+  while (ls) {
+    move(dir * -TURNING_SPEED * 0.65, dir * TURNING_SPEED * 1.15 * 0.65);
+  }
+  brake(true);
   m.flipFacingDirection();
 }
 

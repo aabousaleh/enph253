@@ -50,11 +50,11 @@ void setup() {
 
 void loop() {
   // timeStart = millis();
-  // if (timeStart < 4500) {
-  //   int rightSpeed = 240; //1000 max
-  //   int leftSpeed = 240;
-  //   int correction = 65;
-  //   //line sensing:
+  // if (timeStart < 5000) {
+  //   int rightSpeed = 200; //1000 max
+  //   int leftSpeed = -250;
+  //   int correction = 120;
+    //line sensing:
     double fr = analogRead(FR_TCRT);
     double fl = analogRead(FL_TCRT);
     double br = analogRead(BR_TCRT);
@@ -68,17 +68,17 @@ void loop() {
   //   int front_correction = (fr - fl);
   //   int back_correction = (bl - br);
 
-  //   if (front_correction > 0) {
-  //     rightSpeed -= correction;
-  //   } 
-  //   else if (front_correction < 0) {
-  //     leftSpeed -= correction;
-  //   }
+  //   // if (front_correction > 0) {
+  //   //   rightSpeed -= correction;
+  //   // } 
+  //   // else if (front_correction < 0) {
+  //   //   leftSpeed -= correction;
+  //   // }
 
   //   ledcWrite(PWM_RIGHT_1, rightSpeed/1000.0 * 255);
   //   ledcWrite(PWM_RIGHT_2, 0);
-  //   ledcWrite(PWM_LEFT_1, leftSpeed/1000.0 * 255);
-  //   ledcWrite(PWM_LEFT_2, 0);
+  //   ledcWrite(PWM_LEFT_2, -leftSpeed/1000.0 * 255);
+  //   ledcWrite(PWM_LEFT_1, 0);
   // } else {
   //   ledcWrite(PWM_RIGHT_1, 0);
   //   ledcWrite(PWM_RIGHT_2, 0);

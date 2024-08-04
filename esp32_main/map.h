@@ -39,20 +39,20 @@ class Map{
     Ingredient *currentRecipeIngredients;
     Recipe recipes[4] = {CHEESE_PLATE, END_RECIPE};
 
-    //Burger
+    //Burger, robot 0
     Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, WAIT, GRAB, GO, PLACE, TURN, GO, GRAB, TURN, GO, PLACE, END};
     Instruction burgerSansGrab[15] = {GO, GO, TURN, GO, TURN, GO, GO, TURN, GO, TURN, GO, END};
     double burgerLocations[7] = {BUNS, PLATES, PATTIES, COOKTOP, PLATES, BUNS, PLATES};
     Ingredient burgerIngredients[5] = {bun, patty, patty, bun, plate};
 
-    //cheese
+    //cheese, robot 1
     Instruction cheeseInstructions[15] = {GO, GRAB, TURN, GO, PLACE, GRAB, TURN, GO, PLACE, END};
-    double cheeseLocations[5] = {CHEESE, PLATES, SERVING};
+    double cheeseLocations[5] = {CHEESE, POTATOES, SERVING};
     Ingredient cheeseIngredients[2] = {cheese, plate};
 
     //Test
-    Instruction testInstructions[4] = {GO, END};
-    double testLocations[2] = {BUNS};
+    Instruction testInstructions[4] = {GO, TURN, END};
+    double testLocations[2] = {SERVING};
     Ingredient testIngredients[2] = {plate};
 
     Instruction endInstructions[1] = {WAIT};

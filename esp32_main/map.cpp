@@ -17,7 +17,7 @@ int Map::getFacingDirection() {
 };
 
 int Map::getDrivingDirection() {
-  return drivingDirection;
+  return facingDirection * movingDirection;
 };
 
 //TODO: consider making drivingDirection dependent on moving direction (we know where we want to go based on position, we send driving direction instruction based on that and facing direction: D = M/F)

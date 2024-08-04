@@ -13,13 +13,13 @@ Motor::Motor(int _pinA, int _pinB, float _maxSpeed){
   digitalWrite(pinA, LOW);
   digitalWrite(pinB, LOW);
 
-  ledcAttach(pinA, 250, 8);
-  ledcAttach(pinB, 250, 8);
+  ledcAttach(pinA, 250, 12);
+  ledcAttach(pinB, 250, 12);
 
 };
 
 void Motor::setSpeed(float speed) {
-  int pwm = (abs(speed) < maxSpeed) ? (speed / maxSpeed) * 255.0 : 255 * speed / abs(speed);
+  int pwm = (abs(speed) < maxSpeed) ? (speed / maxSpeed) * 4095.0 : 4095 * speed / abs(speed);
   if (pwm >= 0) {
     ledcWrite(pinA, pwm);
     ledcWrite(pinB, 0);
