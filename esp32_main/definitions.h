@@ -1,7 +1,7 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
-const int ROBOT_ID = 0; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum robot
+const int ROBOT_ID = 1; //CHANGE FOR EACH ROBOT. 0 is scooper robot, 1 is vacuum robot
 
 //all the following are in inches
 const double TAPE_WIDTH = 0.75;
@@ -37,16 +37,18 @@ enum Instruction {
   PLACE,
   TURN,
   WAIT,
-  END
+  END,
+  SEND_CHECKPOINT,
+  RECEIVE_CHECKPOINT
 };
 
-enum Food {
+enum Recipe {
   BURGER,
   DELUX_BURGER,
   SALAD,
   CHEESE_PLATE,
   TEST,
-  OVER
+  END_RECIPE
 };
 
 enum Ingredient {

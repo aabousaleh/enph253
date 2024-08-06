@@ -2,8 +2,10 @@
 
 Map::Map() {
   // location = 0;
-  facingDirection = -1;
+  currentCheckpoint
+  facingDirection = 1;
   drivingDirection = 1;
+  movingDirection = 1;
   locationIndex = 0;
   instructionIndex = 0;
   ingredientIndex =
@@ -16,13 +18,17 @@ int Map::getFacingDirection() {
 };
 
 int Map::getDrivingDirection() {
-  return drivingDirection;
+  return facingDirection * movingDirection;
 };
 
 //TODO: consider making drivingDirection dependent on moving direction (we know where we want to go based on position, we send driving direction instruction based on that and facing direction: D = M/F)
 int Map::getMovingDirection() {
-  return facingDirection * drivingDirection;
+  return movingDirection;
 };
+
+void Map::setMovingDirection(int dir) {
+  movingDirection = dir;
+}
 
 State Map::getState() {
   return state;
@@ -49,7 +55,7 @@ Ingredient Map::getNextIngredient() {
 }
 
 void Map::nextRecipe() {
-  Food nextRecipe = recipes[recipeIndex++];
+  Recipe nextRecipe = recipes[recipeIndex++];
   instructionIndex = 0;
   locationIndex = 0;
   ingredientIndex = 0;
@@ -72,16 +78,12 @@ void Map::nextRecipe() {
       currentRecipeIngredients = cheeseIngredients;
       break;
     }
-    case OVER: {
-      currentRecipeInstructions = endInstructions;
-      currentRecipeLocations = endLocations;
-    }
     default: {
-
+      currentRecipeInstructions = endInstructions;
+      // currentRecipeLocations = cheeseLocations;
+      // currentRecipeIngredients = cheeseIngredients;
       break;
     }
-
-  }
   }
 }
 
