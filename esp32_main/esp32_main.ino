@@ -13,7 +13,7 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-uint8_t broadcastAddress[] = {0x64, 0xB7, 0x08, 0x9C, 0x65, 0x90};
+uint8_t broadcastAddress[] = {0x64, 0xB7, 0x08, 0x9C, 0x5B, 0xAC};
 
 esp_now_peer_info_t peerInfo;
 
@@ -283,7 +283,8 @@ void loop() {
         } else if (currentInstruction == GRAB) {
           currentIngredient = m.getNextIngredient();
           if (position == PLATES) {
-            Message dataToBeSent = {sendCheckpoint, true};
+            if (dataReceived.occupyingPlate) break;
+            dataToBeSent.occupyingPlate = true;
             esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
           }
           grab(currentIngredient);
@@ -617,12 +618,12 @@ void spin180(int dir) {
 }
 
 //-1 is right, 1 is left, 0 is error
-int stationRightOrLeft(double station, int robotID) {
-  if (robotID == 0) {
+int stationRightOrLeft(double station) {
+  if (ROBOT_ID == 0) {
     if (station == TOMATOES || station == CUTTING || station == COOKTOP || station == PLATES) return -1;
     if (station == PATTIES || station == BUNS || station == POTATOES) return 1;
     return 0;
-  } else if (robotID == 1) {
+  } else if (ROBOT_ID == 1) {
     if (station == TOMATOES || station == CUTTING || station == COOKTOP || station == PLATES) return 1;
     if (station == CHEESE || station == SERVING || station == LETTUCE) return -1;
     return 0;

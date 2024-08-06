@@ -2,7 +2,6 @@
 
 Map::Map() {
   // location = 0;
-  currentCheckpoint
   facingDirection = 1;
   drivingDirection = 1;
   movingDirection = 1;
@@ -61,7 +60,7 @@ void Map::nextRecipe() {
   ingredientIndex = 0;
   switch (nextRecipe) {
     case BURGER: {
-      currentRecipeInstructions = burgerSansGrab;
+      currentRecipeInstructions = burgerInstructions;
       currentRecipeLocations = burgerLocations;
       currentRecipeIngredients = burgerIngredients;
       break;
