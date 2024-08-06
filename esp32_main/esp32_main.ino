@@ -22,7 +22,8 @@ typedef struct Message{
   bool occupyingPlate;
 }Message;
 
-Message dataReceived;
+Message dataReceived = {0, false};
+Message dataToBeSent = {0, false};
 
 int selfCheckpoint = 0;
 int otherCheckpoint = 0;
@@ -48,7 +49,7 @@ AS5600 as5600_1(&Wire1);
 const int MAX_SPEED = 1000;
 int BASE_SPEED = 950;
 double STEERING_CONSTANT = 0.375;
-double TURNING_SPEED = 0.125 * MAX_SPEED;
+double TURNING_SPEED = 0.08 * MAX_SPEED;
 double ADJUSTING_SPEED = 0.15 * MAX_SPEED;
 int TURNING_DELAY = 500;
 
@@ -206,12 +207,12 @@ void loop() {
           double distance = intendedPosition - position;
           m.setMovingDirection(sign(distance));
           if ( abs(distance) > 1) {
-            // BASE_SPEED = 650 * m.getDrivingDirection();//abs(distance) > 10 ? 240 * m.getDrivingDirection() : 100 * m.getDrivingDirection();
-            equalSpeedSet(BASE_SPEED * m.getDrivingDirection());
+            //BASE_SPEED = 650 * m.getDrivingDirection();//abs(distance) > 10 ? 240 * m.getDrivingDirection() : 100 * m.getDrivingDirection();
+            
+            equalSpeedSet((abs(distance) > 10 ? 1.0 : 0.15) * BASE_SPEED * m.getDrivingDirection());
             lineSensingCorrection();
             move(rightSpeedSetpoint, leftSpeedSetpoint);
           } else {
-            // BASE_SPEED = 90 * m.getDrivingDirection();
             brake(true);
             // equalSpeedSet(ADJUSTING_SPEED);
             // move(rightSpeedSetpoint, leftSpeedSetpoint);
@@ -249,33 +250,17 @@ void loop() {
           lineSensingCorrection();
           move(rightSpeedSetpoint, leftSpeedSetpoint);
           if (blackTapeCounter >= 2) {
-            //Serial.println("on tape");
-          //   equalSpeedSet(ADJUSTING_SPEED * sign(BASE_SPEED));
-          //   //lineSensingCorrection();
-          //   move(rightSpeedSetpoint, leftSpeedSetpoint);
-          //   //Serial.println("adjusting");
-          //   //Serial.println(rightSpeedSetpoint);
-          // } else {
-          // //   // double final = position + sign(rightSpeedSetpoint) * TAPE_WIDTH / 2.0;
-          // //   // while (position != final) {
-          // //   //   equalSpeedSet(ADJUSTING_SPEED / 2.0 * sign(rightSpeedSetpoint) * m.getFacingDirection());
-          // //   //   move();
-          // //   // }
-          // //   // currentInstruction = m.getNextInstruction();
-          // //   // updateInstruction();
             brake(true);
             position = intendedPosition;
             currentInstruction = m.getNextInstruction();
             updateInstruction();
             blackTapeCounter = 0;
-          //   delay(1000);
-          //   // Serial.println("reached");
+
           }
         }
         break;
       }
       case SPIN: {
-        //Serial.println("spin");
         spin180Encoder(1);
         delay(1000);
         currentInstruction = m.getNextInstruction();
@@ -287,9 +272,11 @@ void loop() {
         currentInstruction = m.getNextInstruction();
         updateInstruction();
         break;
+        if (stationRightOrLeft(position) != m.getFacingDirection()) spin180Encoder(1);
         if (currentInstruction == PLACE) {
           if (position == PLATES) {
-            Message dataToBeSent = {sendCheckpoint, true};
+            if (dataReceived.occupyingPlate) break;
+            dataToBeSent.occupyingPlate = true;
             esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
           }
           place();
@@ -301,15 +288,20 @@ void loop() {
           }
           grab(currentIngredient);
         }
-          //send status to other robot
-          delay(1000);
-          currentInstruction = m.getNextInstruction();
-          updateInstruction();
+        dataToBeSent.occupyingPlate = false;
+        esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
+        //send status to other robot
+        delay(1000);
+        currentInstruction = m.getNextInstruction();
+        updateInstruction();
 
         break;
       }
       case WAITING: {
-
+        if (dataReceived.checkpoint >= checkpointToWaitFor) {
+          currentInstruction = m.getNextInstruction();
+          updateInstruction();
+        }
         break;
       }
       default: {
@@ -435,28 +427,25 @@ void updateInstruction() {
     case WAIT: {
       DRIVING = false;
       brake(false);
+      checkpointToWaitFor = 100;
       m.state = WAITING;
       break;
     }
     case END: {
-      //TODO: fix this case
-      // m.nextRecipe();
-      // DRIVING = false;
       delay(500);
       brake(false);
       m.nextRecipe();
       currentInstruction = m.getNextInstruction();
       updateInstruction();
-      //m.state = WAITING;
       break;
     }
     case SEND_CHECKPOINT: {
-      Message dataToBeSent = {sendCheckpointIncrement, false};
+      dataToBeSent.checkpoint = ++selfCheckpoint;
       esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
       break;
     }
     case RECEIVE_CHECKPOINT: {
-
+      m.state = WAITING;
     }
     default: {
       //this should never happen
@@ -573,8 +562,7 @@ void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
   double finalAnglePosition = 11.065;//12.4;
   double currentPosition = 0;
-  move(dir * -TURNING_SPEED, dir * TURNING_SPEED * 1.15);
-  int jitter = 0;
+  move(dir * -TURNING_SPEED, dir * TURNING_SPEED * 1.125);
   unsigned long currentMillis = millis();
   while (finalAnglePosition - currentPosition > 0) {
     double currentAngle = as5600_1.readAngle() / 4096.0 * 360;
@@ -582,16 +570,6 @@ void spin180Encoder(int dir) {
     if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360;
     currentPosition += deltaA/360.0 * 6.28 * WHEEL_RADIUS * dir;
     lastAngle = currentAngle;
-    // if (millis() - currentMillis > 50) {
-    //   currentMillis = millis();
-    //   jitter *= -1;
-    // }
-    // if (jitter == 1) {
-    //   move(dir * -TURNING_SPEED, dir * TURNING_SPEED);
-    // }
-    // if (jitter == -1) {
-    //   brake(false);
-    // }
   }
   // double fr = analogRead(FR_TCRT);
   // while (fr < 4090) {
@@ -621,15 +599,15 @@ void spin180(int dir) {
   m.flipFacingDirection();
 }
 
-//1 is right, -1 is left, 0 is error
+//-1 is right, 1 is left, 0 is error
 int stationRightOrLeft(double station, int robotID) {
   if (robotID == 0) {
-    if (station == TOMATOES || station == CUTTING || station == COOKTOP || station == PLATES) return 1;
-    if (station == PATTIES || station == BUNS || station == POTATOES) return -1;
+    if (station == TOMATOES || station == CUTTING || station == COOKTOP || station == PLATES) return -1;
+    if (station == PATTIES || station == BUNS || station == POTATOES) return 1;
     return 0;
   } else if (robotID == 1) {
-    if (station == TOMATOES || station == CUTTING || station == COOKTOP || station == PLATES) return -1;
-    if (station == CHEESE || station == SERVING || station == LETTUCE) return 1;
+    if (station == TOMATOES || station == CUTTING || station == COOKTOP || station == PLATES) return 1;
+    if (station == CHEESE || station == SERVING || station == LETTUCE) return -1;
     return 0;
   }
 }
