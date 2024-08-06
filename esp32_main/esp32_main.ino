@@ -30,7 +30,7 @@ AS5600 as5600_1(&Wire1);
 const int MAX_SPEED = 1000;
 int BASE_SPEED = 950;
 double STEERING_CONSTANT = 0.375;
-double TURNING_SPEED = 0.10 * MAX_SPEED;
+double TURNING_SPEED = 0.125 * MAX_SPEED;
 double ADJUSTING_SPEED = 0.15 * MAX_SPEED;
 int TURNING_DELAY = 500;
 
@@ -77,61 +77,80 @@ void setup() {
   
   Serial.begin(115200);
 
-  pinMode(FR_TCRT, INPUT);
-  pinMode(FL_TCRT, INPUT);
-  pinMode(BR_TCRT, INPUT);
-  pinMode(BL_TCRT, INPUT);
+  //pins
 
-  pinMode(RS_TCRT, INPUT);
-  pinMode(LS_TCRT, INPUT);
+    pinMode(FR_TCRT, INPUT);
+    pinMode(FL_TCRT, INPUT);
+    pinMode(BR_TCRT, INPUT);
+    pinMode(BL_TCRT, INPUT);
 
-  pinMode(MICRO_SWITCH_1, INPUT);
-  pinMode(MICRO_SWITCH_2, INPUT);
+    pinMode(RS_TCRT, INPUT);
+    pinMode(LS_TCRT, INPUT);
 
-  pinMode(PUMP_SENSE, INPUT);
-  pinMode(PUMP, OUTPUT);
-  pinMode(VALVE, OUTPUT);
+    pinMode(MICRO_SWITCH_1, INPUT);
+    pinMode(MICRO_SWITCH_2, INPUT);
 
-  pinMode(CLAW_SERVO, OUTPUT);
+    pinMode(PUMP_SENSE, INPUT);
+    pinMode(PUMP, OUTPUT);
+    pinMode(VALVE, OUTPUT);
 
-  ledcAttach(CLAW_SERVO, SERVO_PWM_FREQUENCY, SERVO_PWM_RESOLUTION);
+    pinMode(CLAW_SERVO, OUTPUT);
 
-  digitalWrite(PUMP, LOW);
-  digitalWrite(VALVE, LOW);
+    ledcAttach(CLAW_SERVO, SERVO_PWM_FREQUENCY, SERVO_PWM_RESOLUTION);
 
-  //initialize the i2c busses
-  Wire.begin(I2C_SDA0, I2C_SCL0);
-  Wire1.begin(I2C_SDA1, I2C_SCL1);
+    digitalWrite(PUMP, LOW);
+    digitalWrite(VALVE, LOW);
+
+    setupArmServos();
 
 
-  //initialize right encoder
-  as5600_0.begin();
-  as5600_0.setDirection(AS5600_COUNTERCLOCK_WISE);  //  check encoder/magnet to make sure this is correct
-  Serial.print("Connect device 0: ");
-  Serial.println(as5600_0.isConnected() ? "true" : "false");
-  delay(1000);
+  //encoders
+  
+    //initialize the i2c busses
+    Wire.begin(I2C_SDA0, I2C_SCL0);
+    Wire1.begin(I2C_SDA1, I2C_SCL1);
 
-  as5600_1.begin();
-  as5600_1.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
-  Serial.print("Connect device 1: ");
-  Serial.println(as5600_1.isConnected() ? "true" : "false");
-  delay(1000);
+    //initialize right encoder
+    as5600_0.begin();
+    as5600_0.setDirection(AS5600_COUNTERCLOCK_WISE);  //  check encoder/magnet to make sure this is correct
+    Serial.print("Connect device 0: ");
+    Serial.println(as5600_0.isConnected() ? "true" : "false");
+    delay(1000);
+
+    as5600_1.begin();
+    as5600_1.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
+    Serial.print("Connect device 1: ");
+    Serial.println(as5600_1.isConnected() ? "true" : "false");
+    delay(1000);
+
+    // server.begin();
+    lastAngle_0 = as5600_0.readAngle() / 4096.0 * 360;
+    lastAngle_1 = as5600_1.readAngle() / 4096.0 * 360;
 
   equalSpeedSet(BASE_SPEED);
-
-  setupArmServos();
-
-  // WiFi.mode(WIFI_STA);
+/*
+  WiFi.mode(WIFI_STA);
+  // Init ESP-NOW
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+  esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = 0;  
+  peerInfo.encrypt = false;
+  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+    Serial.println("Failed to add peer");
+    return;
+  }
+  esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
+  delay(3000);
   // WiFi.begin(ssid, password);
   // while (WiFi.waitForConnectResult() != WL_CONNECTED) {
   //   delay(5000);
   //   ESP.restart();
   // }
-
-  // server.begin();
-  lastAngle_0 = as5600_0.readAngle() / 4096.0 * 360;
-  lastAngle_1 = as5600_1.readAngle() / 4096.0 * 360;
-
+  */
   currentInstruction = m.getNextInstruction();
   updateInstruction();
 
@@ -224,6 +243,10 @@ void loop() {
         break;
       }
       case ADJUST: {
+          brake(true);
+          currentInstruction = m.getNextInstruction();
+          updateInstruction();
+          break;
         if (intendedPosition == SERVING) {
           brake(true);
           currentInstruction = m.getNextInstruction();
@@ -266,6 +289,7 @@ void loop() {
       case SPIN: {
         //Serial.println("spin");
         spin180Encoder(1);
+        delay(1000);
         currentInstruction = m.getNextInstruction();
         updateInstruction();
         break;
@@ -432,6 +456,7 @@ void updateInstruction() {
       //TODO: fix this case
       // m.nextRecipe();
       // DRIVING = false;
+      delay(500);
       brake(false);
       m.nextRecipe();
       currentInstruction = m.getNextInstruction();
@@ -540,6 +565,8 @@ void brake(bool useBackdrive) {
     move(0,0);
     delay(10);
     //equalSpeedSet(-BASE_SPEED / 2);
+    //left.setSpeed(-leftSpeedSetpoint);
+    //delay(10);
     move(-rightSpeedSetpoint, -leftSpeedSetpoint);
     // right.setSpeed(rightSpeedSetpoint);
     // left.setSpeed(leftSpeedSetpoint);
@@ -550,7 +577,7 @@ void brake(bool useBackdrive) {
 
 void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
-  double finalAnglePosition = 10.15;//12.4;
+  double finalAnglePosition = 11.065;//12.4;
   double currentPosition = 0;
   move(dir * -TURNING_SPEED, dir * TURNING_SPEED * 1.15);
   int jitter = 0;

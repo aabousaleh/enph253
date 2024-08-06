@@ -2,7 +2,7 @@
 
 Map::Map() {
   // location = 0;
-  facingDirection = -1;
+  facingDirection = 1;
   drivingDirection = 1;
   movingDirection = 1;
   locationIndex = 0;
