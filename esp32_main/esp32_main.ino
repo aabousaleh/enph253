@@ -301,6 +301,7 @@ void loop() {
         if (dataReceived.checkpoint >= checkpointToWaitFor) {
           currentInstruction = m.getNextInstruction();
           updateInstruction();
+          checkpointToWaitFor++;
         }
         break;
       }
@@ -435,6 +436,9 @@ void updateInstruction() {
       delay(500);
       brake(false);
       m.nextRecipe();
+      int selfCheckpoint = 0;
+      int otherCheckpoint = 0;
+      int checkpointToWaitFor = 1;
       currentInstruction = m.getNextInstruction();
       updateInstruction();
       break;
