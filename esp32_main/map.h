@@ -40,12 +40,12 @@ class Map{
     Recipe recipes[4] = {BURGER, END_RECIPE};
 
     //Burger, robot 0
-    //Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, PLACE, SEND_CHECKPOINT, TURN, GO, GRAB, TURN, GO, PLACE, WAIT, GRAB, GO, PLACE, TURN, GO, GRAB, TURN, GO, RECEIVE_CHECKPOINT, PLACE, SEND_CHECKPOINT, RECEIVE_CHECKPOINT, END};
-    Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, RECEIVE_CHECKPOINT, PLACE, GO, GRAB, GO, PLACE, TURN, GRAB, TURN, PLACE, SEND_CHECKPOINT, RECEIVE_CHECKPOINT, GRAB, TURN, GO, END};
-    double burgerLocations[7] = {CHEESE, PLATES, TOMATOES, PLATES, SERVING};
-    Ingredient burgerIngredients[5] = {cheese, tomatoe, lettuce, plate};
+    //Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, PLACE, SEND_CHECKPOINT, TURN, GO, GRAB, TURN, GO, PLACE, GO, GRAB, GO, PLACE, TURN, GO, GRAB, TURN, GO, RECEIVE_CHECKPOINT, PLACE, SEND_CHECKPOINT, RECEIVE_CHECKPOINT, END};
+    Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, RECEIVE_CHECKPOINT, PLACE, TURN, GRAB, TURN, PLACE, GO, GRAB, GO, PLACE, SEND_CHECKPOINT, RECEIVE_CHECKPOINT, GRAB, TURN, GO, END};
+    double burgerLocations[7] = {CHEESE, PLATES, COOKTOP, PLATES, SERVING};
+    Ingredient burgerIngredients[5] = {cheese, lettuce, patty, plate};
     //Instruction burgerSansGrab[15] = {GO, GO, TURN, GO, TURN, GO, GO, TURN, GO, TURN, GO, END};
-    //double burgerLocations[7] = {BUNS, PLATES, PATTIES, COOKTOP, PLATES, BUNS, PLATES};
+    //double burgerLocations[7] = {BUNS, PLATES, PATTIES, COOKTOP, TOMATOES, PLATES, BUNS, PLATES};
     //Ingredient burgerIngredients[5] = {bun, patty, patty, bun, plate};
 
     //cheese, robot 1
