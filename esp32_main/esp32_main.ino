@@ -9,6 +9,24 @@
 #include "arm.h"
 #include "vacuum.h"
 
+
+#include <esp_now.h>
+#include <WiFi.h>
+
+uint8_t broadcastAddress[] = {0x64, 0xB7, 0x08, 0x9C, 0x65, 0x90};
+
+esp_now_peer_info_t peerInfo;
+
+typedef struct Message{
+  int checkpoint;
+  bool occupyingPlate;
+}Message;
+
+Message dataReceived;
+
+int selfCheckpoint = 0;
+int otherCheckpoint = 0;
+int checkpointToWaitFor = 1;
 // #include <WiFi.h>
 // #include <ESPmDNS.h>
 // #include <WiFiUdp.h>
@@ -128,29 +146,28 @@ void setup() {
     lastAngle_1 = as5600_1.readAngle() / 4096.0 * 360;
 
   equalSpeedSet(BASE_SPEED);
-/*
-  WiFi.mode(WIFI_STA);
-  // Init ESP-NOW
-  if (esp_now_init() != ESP_OK) {
-    Serial.println("Error initializing ESP-NOW");
-    return;
-  }
-  esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
-  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-  peerInfo.channel = 0;  
-  peerInfo.encrypt = false;
-  if (esp_now_add_peer(&peerInfo) != ESP_OK){
-    Serial.println("Failed to add peer");
-    return;
-  }
-  esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
-  delay(3000);
-  // WiFi.begin(ssid, password);
-  // while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-  //   delay(5000);
-  //   ESP.restart();
-  // }
-  */
+  /*
+    WiFi.mode(WIFI_STA);
+    // Init ESP-NOW
+    if (esp_now_init() != ESP_OK) {
+      Serial.println("Error initializing ESP-NOW");
+      return;
+    }
+    esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
+    memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+    peerInfo.channel = 0;  
+    peerInfo.encrypt = false;
+    if (esp_now_add_peer(&peerInfo) != ESP_OK){
+      Serial.println("Failed to add peer");
+      return;
+    }
+    esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
+    delay(3000);
+    // WiFi.begin(ssid, password);
+    // while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    //   delay(5000);
+    //   ESP.restart();
+    // }*/
   currentInstruction = m.getNextInstruction();
   updateInstruction();
 
@@ -159,35 +176,6 @@ void setup() {
 
 void loop() {
   timeStart = millis();
-
-  /*if (Serial.available() > 0){
-    // char c = Serial.read();
-    // switch (c) {
-    //   case 'P':
-
-    // }
-    // GAIN_P = Serial.parseFloat();
-    // Read the incoming byte (assuming the data format is 'P I D')
-    String input = Serial.readStringUntil('\n');
-    // Split the input string into three parts (P, I, D)
-    int spaceIndex1 = input.indexOf(' ');
-    int spaceIndex2 = input.lastIndexOf(' ');
-    if (spaceIndex1 != -1 && spaceIndex2 != -1 && spaceIndex1 != spaceIndex2) {
-      // Extract P, I, D from the input string
-      String strP = input.substring(0, spaceIndex1);
-      String strI = input.substring(spaceIndex1 + 1, spaceIndex2);
-      String strD = input.substring(spaceIndex2 + 1);
-      
-      // Convert strings to doubles
-      GAIN_P = strP.toDouble();
-      GAIN_I = strI.toDouble();
-      GAIN_D = strD.toDouble();
-    }
-    else {
-      // If the input format is incorrect
-      Serial.println("Invalid input format. Please enter 'P I D'.");
-    }
-  }*/
   //TODO: alot
   /*
   1. Add interrupts for microswitches to freeze the robot
@@ -299,26 +287,24 @@ void loop() {
         currentInstruction = m.getNextInstruction();
         updateInstruction();
         break;
-        if (true) { //isReady to check that the other robot completed their task
-          if (currentInstruction == PLACE) {
-            place();
-            // if (abs(position - COOKTOP) < 1) {
-            //   //start timer
-            //   //broadcast it
-            // }
-          } else if (currentInstruction == GRAB) {
-            currentIngredient = m.getNextIngredient();
-            grab(currentIngredient);
-            // if (abs(position - COOKTOP) < 1) {
-            //   //stop timer
-            //   //broadcast it
-            // }
+        if (currentInstruction == PLACE) {
+          if (position == PLATES) {
+            Message dataToBeSent = {sendCheckpoint, true};
+            esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
           }
+          place();
+        } else if (currentInstruction == GRAB) {
+          currentIngredient = m.getNextIngredient();
+          if (position == PLATES) {
+            Message dataToBeSent = {sendCheckpoint, true};
+            esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
+          }
+          grab(currentIngredient);
+        }
           //send status to other robot
           delay(1000);
           currentInstruction = m.getNextInstruction();
           updateInstruction();
-        }
 
         break;
       }
@@ -463,6 +449,14 @@ void updateInstruction() {
       updateInstruction();
       //m.state = WAITING;
       break;
+    }
+    case SEND_CHECKPOINT: {
+      Message dataToBeSent = {sendCheckpointIncrement, false};
+      esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
+      break;
+    }
+    case RECEIVE_CHECKPOINT: {
+
     }
     default: {
       //this should never happen
@@ -627,17 +621,6 @@ void spin180(int dir) {
   m.flipFacingDirection();
 }
 
-void spinBrake(int dir) {
-  right.setSpeed(dir * TURNING_SPEED / 7.5);
-  left.setSpeed(dir * -TURNING_SPEED / 5.0);
-  delay(10);
-  right.setSpeed(0);
-  left.setSpeed(0);
-  right.clearSpeeds();
-  left.clearSpeeds();
-}
-
-
 //1 is right, -1 is left, 0 is error
 int stationRightOrLeft(double station, int robotID) {
   if (robotID == 0) {
@@ -650,3 +633,13 @@ int stationRightOrLeft(double station, int robotID) {
     return 0;
   }
 }
+
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+  //Serial.print("\r\nLast Packet Send Status:\t");
+  //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+};
+
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+  memcpy(&dataReceived, incomingData, sizeof(dataReceived));
+
+};

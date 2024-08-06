@@ -2,6 +2,7 @@
 
 Map::Map() {
   // location = 0;
+  currentCheckpoint
   facingDirection = 1;
   drivingDirection = 1;
   movingDirection = 1;

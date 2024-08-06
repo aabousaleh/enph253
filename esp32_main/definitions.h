@@ -37,7 +37,9 @@ enum Instruction {
   PLACE,
   TURN,
   WAIT,
-  END
+  END,
+  SEND_CHECKPOINT,
+  RECEIVE_CHECKPOINT
 };
 
 enum Recipe {
