@@ -37,6 +37,7 @@ void HAL_UARTEx_RxEventCallback (UART_HandleTypeDef * huart, uint16_t Size)
 ```
 # SPI: BP - DAC Communication:
 Currently, the SPI bus runs at 9MPs. This could be problematic in a more noisy environment.
+The latch speed is set to medium speed, this might be something to experiment with if there are issues later.
 ## Example Writing High to DAC0 and DAC1
 ```
 uint8_t dacHigh[] = {0x00,0x0F,0xFF,0x08,0x0F,0xFF};
@@ -47,7 +48,7 @@ HAL_SPI_Transmit_DMA(&hspi1, dacHigh, sizeof(dacHigh));
 ```
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
     if (hspi->Instance == SPI1) {
-    	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);  //Latch out previous data
+    	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);  //Latch out new data
     }
 }
 ```
