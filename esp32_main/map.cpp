@@ -2,7 +2,7 @@
 
 Map::Map() {
   // location = 0;
-  facingDirection = 1;
+  facingDirection = -1;
   drivingDirection = 1;
   movingDirection = 1;
   locationIndex = 0;
@@ -76,6 +76,16 @@ void Map::nextRecipe() {
       currentRecipeLocations = cheeseLocations;
       currentRecipeIngredients = cheeseIngredients;
       break;
+    }
+    case SALAD: {
+      currentRecipeInstructions = saladInstructions;
+      currentRecipeLocations = saladLocations;
+      currentRecipeIngredients = saladIngredients;
+    }
+    case FLING: {
+      currentRecipeInstructions = flingInstructions;
+      currentRecipeLocations = flingLocations;
+      currentRecipeIngredients = flingIngredients;
     }
     default: {
       currentRecipeInstructions = endInstructions;

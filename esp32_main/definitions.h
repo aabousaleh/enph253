@@ -8,14 +8,14 @@ const double TAPE_WIDTH = 0.75;
 
 //+- 0.25 on the rest
 const double FIELD_LENGTH = 96;
-const double TOMATOES = 6;
+const double TOMATOES = 6.01;
 const double CUTTING = 29.75;
 const double COOKTOP = 72.5;
 const double PLATES = 89.75;
 
 //for robot id 0:
 const double PATTIES = 12;
-const double BUNS = 48;
+const double BUNS = 48.01;
 const double POTATOES = 84;
 
 //for robot id 1:
@@ -28,7 +28,8 @@ enum State {
   ADJUST,
   SPIN,
   ARM,
-  WAITING
+  WAITING,
+  SPECIAL_STATE
 };
 
 enum Instruction {
@@ -39,7 +40,8 @@ enum Instruction {
   WAIT,
   END,
   SEND_CHECKPOINT,
-  RECEIVE_CHECKPOINT
+  RECEIVE_CHECKPOINT,
+  SPECIAL
 };
 
 enum Recipe {
@@ -48,12 +50,14 @@ enum Recipe {
   SALAD,
   CHEESE_PLATE,
   TEST,
+  FLING,
   END_RECIPE
 };
 
 enum Ingredient {
   patty,
-  bun,
+  top_bun,
+  bottom_bun,
   potato,
   tomato,
   cheese,
@@ -106,6 +110,6 @@ enum Ingredient {
 #define MICRO_SWITCH_2 8
 
 //wheel radius in inch
-#define WHEEL_RADIUS 1.285
+#define WHEEL_RADIUS 1.265
 
 #endif

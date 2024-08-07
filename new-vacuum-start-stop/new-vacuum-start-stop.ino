@@ -1,8 +1,10 @@
 void setup() {
   // put your setup code here, to run once:
   pinMode(20, OUTPUT);
+  pinMode(27, OUTPUT);
   
   digitalWrite(20, LOW);
+  digitalWrite(27, LOW);
 
   delay(5000);
 }

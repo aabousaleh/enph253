@@ -50,38 +50,38 @@ void setup() {
 
 void loop() {
   timeStart = millis();
-  int i = 1;
-  //for (int i = 0; i < 20; i++) {
-    ledcWrite(PWM_RIGHT_2, 70.0 * i/1000.0 * 255.0);
-    ledcWrite(PWM_RIGHT_1, 0);
-    ledcWrite(PWM_LEFT_1, 1.10* 70.0 * i/1000.0 * 255.0);
-    ledcWrite(PWM_LEFT_2, 0);
-    delay(3000);
-    ledcWrite(PWM_RIGHT_1, 0);
-    ledcWrite(PWM_RIGHT_2, 0);
-    ledcWrite(PWM_LEFT_1, 0);
-    ledcWrite(PWM_LEFT_2, 0);
-    delay(500);
-  //}
-  ledcWrite(PWM_RIGHT_1, 0);
-  ledcWrite(PWM_RIGHT_2, 0);
-  ledcWrite(PWM_LEFT_1, 0);
-  ledcWrite(PWM_LEFT_2, 0);
-  delay(5000);
+  //int i = 1;
+  // //for (int i = 0; i < 20; i++) {
+  //   ledcWrite(PWM_RIGHT_2, 70.0 * i/1000.0 * 255.0);
+  //   ledcWrite(PWM_RIGHT_1, 0);
+  //   ledcWrite(PWM_LEFT_1, 1.10* 70.0 * i/1000.0 * 255.0);
+  //   ledcWrite(PWM_LEFT_2, 0);
+  //   delay(3000);
+  //   ledcWrite(PWM_RIGHT_1, 0);
+  //   ledcWrite(PWM_RIGHT_2, 0);
+  //   ledcWrite(PWM_LEFT_1, 0);
+  //   ledcWrite(PWM_LEFT_2, 0);
+  //   delay(500);
+  // //}
+  // ledcWrite(PWM_RIGHT_1, 0);
+  // ledcWrite(PWM_RIGHT_2, 0);
+  // ledcWrite(PWM_LEFT_1, 0);
+  // ledcWrite(PWM_LEFT_2, 0);
+  // delay(5000);
   // if (timeStart < 4500) {
   //   int rightSpeed = 350; //1000 max
   //   int leftSpeed = 350;
   //   int correction = 80;
-  //   //line sensing:
-  //   double fr = analogRead(FR_TCRT);
-  //   double fl = analogRead(FL_TCRT);
-  //   double br = analogRead(BR_TCRT);
-  //   double bl = analogRead(BL_TCRT);
+    //line sensing:
+    double fr = analogRead(FR_TCRT);
+    double fl = analogRead(FL_TCRT);
+    double br = analogRead(BR_TCRT);
+    double bl = analogRead(BL_TCRT);
 
-  //   int rs = digitalRead(RS_TCRT);
-  //   int ls = digitalRead(LS_TCRT);
+    int rs = digitalRead(RS_TCRT);
+    int ls = digitalRead(LS_TCRT);
 
-  //   double pot = analogRead(33);
+    double pot = analogRead(33);
 
   //   int front_correction = (fr - fl);
   //   int back_correction = (bl - br);
@@ -103,23 +103,23 @@ void loop() {
   //   ledcWrite(PWM_LEFT_1, 0);
   //   ledcWrite(PWM_LEFT_2, 0);
   // }
-  // // Serial.print("Frontright:");
-  // // Serial.print(fr);
-  // // Serial.print(",");
-  // // Serial.print("Frontleft:");
-  // // Serial.print(fl);
-  // // Serial.print(",");
-  // // Serial.print("Backright:");
-  // // Serial.print(br);
-  // // Serial.print(",");
-  // // Serial.print("Backleft:");
-  // // Serial.print(bl);
-  // // Serial.print(",");
-  // // Serial.print("RightStation:");
-  // // Serial.print(rs);
-  // // Serial.print(",");
-  // // Serial.print("LeftStation:");
-  // // Serial.print(ls);
+  Serial.print("Frontright:");
+  Serial.print(fr);
+  Serial.print(",");
+  Serial.print("Frontleft:");
+  Serial.print(fl);
+  Serial.print(",");
+  Serial.print("Backright:");
+  Serial.print(br);
+  Serial.print(",");
+  Serial.print("Backleft:");
+  Serial.print(bl);
+  Serial.print(",");
+  Serial.print("RightStation:");
+  Serial.print(rs);
+  Serial.print(",");
+  Serial.print("LeftStation:");
+  Serial.println(ls);
   // // Serial.print(",");
   // // Serial.print("pot:");
   // // Serial.println(pot);
