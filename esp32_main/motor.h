@@ -17,10 +17,6 @@ class Motor{
       float speed: a value <= maxSpeed, where the sign gives direction. Given in deg/s
     */
     void setSpeed(float speed);
-    void updateSpeeds(double speed);
-    double averageSpeed();
-    void clearSpeeds();
-    void setAverageSpeeds(double speed);
 
 };
 

@@ -1,14 +1,9 @@
 #include "Arduino.h"
 #include "AS5600.h"
-#include "pid.h"
 #include "motor.h"
 #include "definitions.h"
-// #include "arduino-timer.h"
 #include "map.h"
-//#include "movement.ino"
 #include "arm.h"
-#include "vacuum.h"
-
 
 #include <esp_now.h>
 #include <WiFi.h>
@@ -48,7 +43,7 @@ AS5600 as5600_1(&Wire1);
 //Speed constants
 const int MAX_SPEED = 1000;
 int BASE_SPEED = 950;
-double STEERING_CONSTANT = 0.375;
+double STEERING_CONSTANT = 0.405;
 double TURNING_SPEED = 0.15 * MAX_SPEED;
 double ADJUSTING_SPEED = 0.085 * MAX_SPEED;
 int TURNING_DELAY = 500;
@@ -62,17 +57,13 @@ double lastAngle_1 = 0;
 
 Map m;
 
-int DRIVING = 1; //turns off motors when false
+int DRIVING = 1; //turns off motors when 0
 
 volatile double rightSpeedSetpoint = 0; //in degrees/sec
-Error rightSpeedError(MAX_SPEED*2);
-Error rightPositionError(4096);
 Motor right(PWM_RIGHT_1, PWM_RIGHT_2, MAX_SPEED);
 double rightAngularSpeed;
 
 volatile double leftSpeedSetpoint = 0;
-Error leftSpeedError(MAX_SPEED*2);
-Error leftPositionError(4096);
 Motor left(PWM_LEFT_1, PWM_LEFT_2, MAX_SPEED);
 double leftAngularSpeed;
 
@@ -84,10 +75,8 @@ double intendedPosition;
 Instruction currentInstruction;
 Ingredient currentIngredient;
 
-float returnY = 10.5;
-float returnX = 14.5;
-
-Vacuum v;
+const float returnY = 10.5;
+const float returnX = 14.5;
 
 int blackTapeCounter = 0;
 
@@ -136,20 +125,19 @@ void setup() {
     as5600_0.setDirection(AS5600_COUNTERCLOCK_WISE);  //  check encoder/magnet to make sure this is correct
     Serial.print("Connect device 0: ");
     Serial.println(as5600_0.isConnected() ? "true" : "false");
-    delay(1000);
+    delay(50);
 
     as5600_1.begin();
     as5600_1.setDirection(AS5600_CLOCK_WISE);  //  default, just be explicit.
     Serial.print("Connect device 1: ");
     Serial.println(as5600_1.isConnected() ? "true" : "false");
-    delay(1000);
+    delay(50);
 
     // server.begin();
     lastAngle_0 = as5600_0.readAngle() / 4096.0 * 360;
     lastAngle_1 = as5600_1.readAngle() / 4096.0 * 360;
 
   equalSpeedSet(BASE_SPEED);
-  
   //espnnow
     WiFi.mode(WIFI_STA);
     // Init ESP-NOW
@@ -166,7 +154,7 @@ void setup() {
       return;
     }
     esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
-    delay(3000);
+    delay(1000);
     // WiFi.begin(ssid, password);
     // while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     //   delay(5000);
@@ -180,14 +168,6 @@ void setup() {
 
 void loop() {
   timeStart = millis();
-  //TODO: alot
-  /*
-  1. Add interrupts for microswitches to freeze the robot
-  2. Communication
-  3. create log of recipe stack (to use for isReady)
-  4. figure out blocking
-  */
-  // put your main code here, to run repeatedly:
   /*if (Serial.available() > 0) {
     // Read the incoming byte
     char incomingByte = Serial.read();
@@ -220,7 +200,6 @@ void loop() {
   }
   moveToXY(reach, height);
   delay(10);*/
-  //receive status from other robot
   
   if (timeStart - lastTime > LOOP_INTERVAL) {
     lastTime = timeStart;
@@ -242,37 +221,25 @@ void loop() {
           lastAngle_1 = leftCurrentAngle;
           double distance = intendedPosition - position;
           m.setMovingDirection(sign(distance));
-          if (abs(distance) > 10 || (abs(distance) > 1 && intendedPosition == SERVING)) {
+          if (abs(distance) > 10 || (abs(distance) > 0.5 && intendedPosition == SERVING)) {
             //BASE_SPEED = 650 * m.getDrivingDirection();//abs(distance) > 10 ? 240 * m.getDrivingDirection() : 100 * m.getDrivingDirection();
             equalSpeedSet( BASE_SPEED * m.getDrivingDirection());
             lineSensingCorrection();
             move(rightSpeedSetpoint * rightLineSensingCorrection, leftSpeedSetpoint * leftLineSensingCorrection);
           } else {
-            brake(true);
+            //brake(true);
             // equalSpeedSet(ADJUSTING_SPEED);
             // move(rightSpeedSetpoint, leftSpeedSetpoint);
             // brake(false);
-            // delay(250);
             delay(500);
             // currentInstruction = m.getNextInstruction();
             // updateInstruction();
             m.state = ADJUST;
-            //delay(1000);
-            //int stationToRead = stationRightOrLeft(intendedPosition, ROBOT_ID) * m.getFacingDirection() == 1 ? RS_TCRT : LS_TCRT;
-            //attachInterrupt(digitalPinToInterrupt(LS_TCRT), stationInterrupt, RISING);
-            //m.state = ADJUST;
-            //delay(500);
-            // Serial.println("going to adjust");
           }
         }
         break;
       }
       case ADJUST: {
-          // position = intendedPosition;
-          // brake(true);
-          // currentInstruction = m.getNextInstruction();
-          // updateInstruction();
-          // break;
         if (intendedPosition == SERVING) {
           position = intendedPosition;
           brake(true);
@@ -284,13 +251,14 @@ void loop() {
           if (ls == 0) blackTapeCounter = 0;
           equalSpeedSet(ADJUSTING_SPEED * m.getDrivingDirection());
           lineSensingCorrection();
-          move(rightSpeedSetpoint * rightLineSensingCorrection, leftSpeedSetpoint * leftLineSensingCorrection * 1.45);
+          move(rightSpeedSetpoint * rightLineSensingCorrection, leftSpeedSetpoint * leftLineSensingCorrection * 1.5);
           if (blackTapeCounter >= 2) {
             brake(true);
             position = intendedPosition;
             currentInstruction = m.getNextInstruction();
             updateInstruction();
             blackTapeCounter = 0;
+            delay(250);
           }
         }
         break;
@@ -302,46 +270,34 @@ void loop() {
         break;
       }
       case ARM: {
-        // delay(500);
-        // currentInstruction = m.getNextInstruction();
-        // updateInstruction();
-        // break;
-        Serial.print("start of arm: ");
-        Serial.print(stationRightOrLeft(position));
-        Serial.print(" facing direction: ");
-        Serial.print(m.getFacingDirection());
         //if (stationRightOrLeft(position) != m.getFacingDirection()) spin180Encoder(1);
-        if (currentInstruction == PLACE) {
-          // if (position == PLATES) {
-          //   if (dataReceived.occupyingPlate) break;
-          //   dataToBeSent.occupyingPlate = true;
-          //   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
-          // }
-          Serial.println("placing");
-          place();
-        } else if (currentInstruction == GRAB) {
-          currentIngredient = m.getNextIngredient();
-          // if (position == PLATES) {
-          //   if (dataReceived.occupyingPlate) break;
-          //   dataToBeSent.occupyingPlate = true;
-          //   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
-          // }
-          Serial.println("grabbing");
-          grab(currentIngredient);
-        }
+        // if (currentInstruction == PLACE) {
+        //   // if (position == PLATES) {
+        //   //   if (dataReceived.occupyingPlate) break;
+        //   //   dataToBeSent.occupyingPlate = true;
+        //   //   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
+        //   // }
+        //   place();
+        // } else if (currentInstruction == GRAB) {
+        //   currentIngredient = m.getNextIngredient();
+        //   // if (position == PLATES) {
+        //   //   if (dataReceived.occupyingPlate) break;
+        //   //   dataToBeSent.occupyingPlate = true;
+        //   //   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
+        //   // }
+        //   grab(currentIngredient);
+        // }
         // dataToBeSent.occupyingPlate = false;
         // esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
         //send status to other robot
-        delay(1000);
+        delay(500);
         currentInstruction = m.getNextInstruction();
         updateInstruction();
 
         break;
       }
       case WAITING: {
-        Serial.println("waiting");
         if (dataReceived.checkpoint >= checkpointToWaitFor) {
-          Serial.println("done waiting");
           currentInstruction = m.getNextInstruction();
           updateInstruction();
           checkpointToWaitFor++;
@@ -461,8 +417,7 @@ void grab(Ingredient i) {
       delay(550);
       moveToXY(41.5, 17);
       delay(550);
-      // digitalWrite(PUMP, HIGH);
-      //turn on vaccume
+      //turn on vacuum
         setVac(true);
       moveToXY(43.5, 10.6);
       delay(550);
@@ -476,8 +431,7 @@ void grab(Ingredient i) {
       delay(550);
       moveToXY(41.5, 17);
       delay(750);
-      // digitalWrite(PUMP, HIGH);
-      //turn on vaccume
+      //turn on vacuum
         setVac(true);
       moveToXY(43.5, 11.6);
       delay(750);
@@ -491,8 +445,7 @@ void grab(Ingredient i) {
       delay(550);
       moveToXY(38, 18);
       delay(750);
-      // digitalWrite(PUMP, HIGH);
-      //turn on vaccume
+      //turn on vacuum
         setVac(true);
       moveToXY(43.5, 13);
       delay(750);
@@ -506,8 +459,7 @@ void grab(Ingredient i) {
       delay(550);
       moveToXY(42.5, 17);
       delay(750);
-      // digitalWrite(PUMP, HIGH);
-      //turn on vaccume
+      //turn on vacuum
         setVac(true);
       moveToXY(43.5, 11.5);
       delay(750);
@@ -656,8 +608,8 @@ void brake(bool useBackdrive) {
     delay(15);
     left.setSpeed(-leftSpeedSetpoint * DRIVING);
     delay(10);
-    move(-rightSpeedSetpoint, -leftSpeedSetpoint);
-    delay(50);
+    move(-rightSpeedSetpoint/1.5, -leftSpeedSetpoint/1.5);
+    delay(20);
   }
   move(0,0);
 }
@@ -683,9 +635,6 @@ void spin180Encoder(int dir) {
   int fr = analogRead(FR_TCRT);
   int bl = analogRead(BL_TCRT);
   while (fr < 4050 || bl < 4050) {
-    // Serial.print(fr);
-    // Serial.print(" ");
-    // Serial.println(bl);
     fr = analogRead(FR_TCRT);
     bl = analogRead(BL_TCRT);
     equalSpeedSet(dir * 0.075 * MAX_SPEED);
@@ -693,25 +642,11 @@ void spin180Encoder(int dir) {
     leftSpeedSetpoint = dir * 0.075 * 1.5 * MAX_SPEED;
     move(rightSpeedSetpoint, leftSpeedSetpoint);
   }
-  blackTapeCounter = 0;
   brake(true);
-  delay(850);
-  DRIVING = false;
+  delay(750);
   m.flipFacingDirection();
   lastAngle_0 = as5600_0.readAngle() / 4096.0 * 360;
   lastAngle_1 = as5600_1.readAngle() / 4096.0 * 360;
-}
-
-//dir: 1 CW, -1 CCW
-void spin180(int dir) {
-  move(dir * -TURNING_SPEED, dir * TURNING_SPEED * 1.15);
-  delay(TURNING_DELAY);
-  int ls = digitalRead(LS_TCRT);
-  while (ls) {
-    move(dir * -TURNING_SPEED * 0.65, dir * TURNING_SPEED * 1.15 * 0.65);
-  }
-  brake(true);
-  m.flipFacingDirection();
 }
 
 //-1 is right, 1 is left, 0 is error

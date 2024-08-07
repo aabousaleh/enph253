@@ -37,10 +37,6 @@ void Map::flipFacingDirection() {
   facingDirection *= -1;
 };
 
-void Map::flipDrivingDirection() {
-  drivingDirection *= -1;
-};
-
 Instruction Map::getNextInstruction() {
   return currentRecipeInstructions[instructionIndex++];
 }
