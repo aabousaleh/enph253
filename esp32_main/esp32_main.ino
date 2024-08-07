@@ -653,11 +653,11 @@ void move(double rss, double lss) {
 void brake(bool useBackdrive) {
   if (useBackdrive) {
     move(0,0);
+    delay(15);
+    left.setSpeed(-leftSpeedSetpoint * DRIVING);
     delay(10);
-    // left.setSpeed(-leftSpeedSetpoint * DRIVING);
-    // delay(10);
     move(-rightSpeedSetpoint, -leftSpeedSetpoint);
-    delay(20);
+    delay(50);
   }
   move(0,0);
 }
@@ -682,10 +682,10 @@ void spin180Encoder(int dir) {
   }
   int fr = analogRead(FR_TCRT);
   int bl = analogRead(BL_TCRT);
-  while (fr < 3500 || bl < 3500) {
-    Serial.print(fr);
-    Serial.print(" ");
-    Serial.println(bl);
+  while (fr < 4050 || bl < 4050) {
+    // Serial.print(fr);
+    // Serial.print(" ");
+    // Serial.println(bl);
     fr = analogRead(FR_TCRT);
     bl = analogRead(BL_TCRT);
     equalSpeedSet(dir * 0.075 * MAX_SPEED);
