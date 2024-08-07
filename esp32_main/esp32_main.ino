@@ -543,7 +543,7 @@ void place() {
     for (int i = 0; i < 23; i++) {
       moveToXY(20 + i, 12 + i*0.35);
       delay(50);
-      if (i == 20) {
+      if (i == 15) {
         setVac(false);
       }
     }
@@ -654,8 +654,8 @@ void brake(bool useBackdrive) {
   if (useBackdrive) {
     move(0,0);
     delay(10);
-    left.setSpeed(-leftSpeedSetpoint * DRIVING);
-    delay(10);
+    // left.setSpeed(-leftSpeedSetpoint * DRIVING);
+    // delay(10);
     move(-rightSpeedSetpoint, -leftSpeedSetpoint);
     delay(20);
   }
@@ -664,14 +664,14 @@ void brake(bool useBackdrive) {
 
 void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
-  double finalAnglePosition = 10;//12.4;
+  double finalAnglePosition = 6.5;//12.4;
   double currentPosition = 0;
   if (currentIngredient == plate) {
     TURNING_SPEED = 0.085 * MAX_SPEED;
   } else {
     TURNING_SPEED = 0.15 * MAX_SPEED;
   }
-  move(dir * -TURNING_SPEED, dir * TURNING_SPEED);
+  move(dir * -TURNING_SPEED, dir * TURNING_SPEED * 1.15);
   unsigned long currentMillis = millis();
   while (finalAnglePosition - currentPosition > 0) {
     double currentAngle = as5600_1.readAngle() / 4096.0 * 360;
@@ -680,15 +680,23 @@ void spin180Encoder(int dir) {
     currentPosition += deltaA/360.0 * 6.28 * WHEEL_RADIUS * dir;
     lastAngle = currentAngle;
   }
-  // while (blackTapeCounter < 2) {
-  //   int fr = digitalRead(FR_TCRT);
-  //   if (fr >= 4010) blackTapeCounter++;
-  //   if (fr <= 4009) blackTapeCounter = 0;
-  //   move(-dir * 0.085 * MAX_SPEED, dir * 0.085 * MAX_SPEED);
-  // }
-  // blackTapeCounter = 0;
-  brake(false);
-  delay(250);
+  int fr = analogRead(FR_TCRT);
+  int bl = analogRead(BL_TCRT);
+  while (fr < 3500 || bl < 3500) {
+    Serial.print(fr);
+    Serial.print(" ");
+    Serial.println(bl);
+    fr = analogRead(FR_TCRT);
+    bl = analogRead(BL_TCRT);
+    equalSpeedSet(dir * 0.075 * MAX_SPEED);
+    rightSpeedSetpoint = -dir * 0.075 * MAX_SPEED;
+    leftSpeedSetpoint = dir * 0.075 * 1.5 * MAX_SPEED;
+    move(rightSpeedSetpoint, leftSpeedSetpoint);
+  }
+  blackTapeCounter = 0;
+  brake(true);
+  delay(850);
+  DRIVING = false;
   m.flipFacingDirection();
   lastAngle_0 = as5600_0.readAngle() / 4096.0 * 360;
   lastAngle_1 = as5600_1.readAngle() / 4096.0 * 360;

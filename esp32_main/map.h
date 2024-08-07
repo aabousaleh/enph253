@@ -70,8 +70,8 @@ class Map{
     Ingredient cheeseIngredients[2] = {cheese, plate};
 
     //Test
-    Instruction testInstructions[30] = {GO, GRAB, SPECIAL, END};//{GRAB, TURN, PLACE, TURN, GRAB, TURN, PLACE, TURN, GRAB, TURN, PLACE, TURN, GRAB, TURN, PLACE, TURN, GRAB, TURN, PLACE, TURN, GRAB, TURN, PLACE, END};
-    double testLocations[2] = {CHEESE, SERVING};//{SERVING, CHEESE};
+    Instruction testInstructions[30] = {GO, GO, END};//{GRAB, TURN, PLACE, TURN, GRAB, TURN, PLACE, TURN, GRAB, TURN, PLACE, TURN, GRAB, TURN, PLACE, TURN, GRAB, TURN, PLACE, TURN, GRAB, TURN, PLACE, END};
+    double testLocations[2] = {PLATES, COOKTOP};//{SERVING, CHEESE};
     Ingredient testIngredients[10] = {cheese};//{bottom_bun, patty, tomato, cheese, lettuce, top_bun};
 
     Instruction endInstructions[1] = {WAIT};
