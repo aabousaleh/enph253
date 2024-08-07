@@ -52,3 +52,14 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
     }
 }
 ```
+## Mono Sample to 3 Byte Conversion
+DAC0MSByte = sample >> 4;
+DAC0andDAC1Byte = ((sample & 15) << 4) + (sample >> 8);
+DAC1LSByte = sample & 255;
+
+## 3 Byte to 4 Byte Conversion
+dacOutput[1] = (DAC0MSByte >> 4);
+dacOutput[2] = (DAC0MSByte << 4) + (DAC0andDAC1Byte >> 4);
+dacOutput[4] = DAC0andDAC1Byte & 15;
+dacOutput[5] = DAC1LSByte;
+ 
