@@ -1,7 +1,12 @@
 #include "map.h"
 
-Map::Map() {
+Map::Map(int recipeNum) {
   // location = 0;
+  if (recipeNum == 0) {
+    currentRecipes = recipes1;
+  } else if (recipeNum == 1) {
+    currentRecipes = recipes2;
+  }
   facingDirection = -1;
   drivingDirection = 1;
   movingDirection = 1;
@@ -9,8 +14,15 @@ Map::Map() {
   instructionIndex = 0;
   ingredientIndex =
   recipeIndex = 0;
-  nextRecipe();
 };
+
+void Map::setRecipes(int recipeNum) {
+  if (recipeNum == 0) {
+    currentRecipes = recipes1;
+  } else if (recipeNum == 1) {
+    currentRecipes = recipes2;
+  }
+}
 
 int Map::getFacingDirection() {
   return facingDirection;
@@ -50,7 +62,7 @@ Ingredient Map::getNextIngredient() {
 }
 
 void Map::nextRecipe() {
-  Recipe nextRecipe = recipes1[recipeIndex++];
+  Recipe nextRecipe = currentRecipes[recipeIndex++];
   instructionIndex = 0;
   locationIndex = 0;
   ingredientIndex = 0;
@@ -83,11 +95,13 @@ void Map::nextRecipe() {
       currentRecipeInstructions = saladInstructions;
       currentRecipeLocations = saladLocations;
       currentRecipeIngredients = saladIngredients;
+      break;
     }
     case FLING: {
       currentRecipeInstructions = flingInstructions;
       currentRecipeLocations = flingLocations;
       currentRecipeIngredients = flingIngredients;
+      break;
     }
     default: {
       currentRecipeInstructions = endInstructions;

@@ -20,7 +20,7 @@ const double POTATOES = 84;
 
 //for robot id 1:
 const double CHEESE = 6;
-const double SERVING = 48;
+const double SERVING = 50;
 const double LETTUCE = 90;
 
 enum State {
@@ -66,7 +66,7 @@ enum Ingredient {
   plate
 };
 
-#define LOOP_INTERVAL 2 //in millis
+#define LOOP_INTERVAL 5 //in millis
 
 //right motor pwm pins
 #define PWM_RIGHT_1 26

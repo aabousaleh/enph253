@@ -7,7 +7,7 @@
 class Map{
 
   public:
-    Map();
+    Map(int recipeNum);
     int getFacingDirection(); //1 is to the right, -1 is to the left
     int getDrivingDirection(); //1 is forward, -1 is backward
     int getMovingDirection(); //1 is moving right, -1 is moving left
@@ -19,6 +19,7 @@ class Map{
     double getNextLocation();
     Ingredient getNextIngredient();
     void nextRecipe();
+    void setRecipes(int recipeNum);
 
 
   protected:
@@ -32,11 +33,12 @@ class Map{
     Instruction *currentRecipeInstructions;
     double *currentRecipeLocations;
     Ingredient *currentRecipeIngredients;
+    Recipe *currentRecipes;
     Recipe recipes1[10] = {CHEESE_PLATE, CHEESE_PLATE, CHEESE_PLATE, CHEESE_PLATE, FLING, END_RECIPE};
-    Recipe recipes2[5] = {DELUXE_BURGER, DELUXE_BURGER, DELUXE_BURGER, DELUXE_BURGER, END_RECIPE};
+    Recipe recipes2[5] = {FLING, END_RECIPE};
 
     //FLING
-    Instruction flingInstructions[8] = {GO, GRAB, SPECIAL, END};
+    Instruction flingInstructions[8] = {GO, GRAB, GO, SPECIAL, END};
     double flingLocations[2] = {CHEESE, SERVING};
     Ingredient flingIngredients[1] = {cheese};
 

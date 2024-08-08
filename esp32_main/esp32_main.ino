@@ -42,8 +42,8 @@ AS5600 as5600_1(&Wire1);
 
 //Speed constants
 const int MAX_SPEED = 1000;
-int BASE_SPEED = 950;
-double STEERING_CONSTANT = 0.45;
+int BASE_SPEED = 800;
+double STEERING_CONSTANT = 0.35;
 double TURNING_SPEED = 0.285 * MAX_SPEED;//0.15 * MAX_SPEED;
 double ADJUSTING_SPEED = 0.245 * MAX_SPEED;//0.085 * MAX_SPEED;
 int TURNING_DELAY = 500;
@@ -55,7 +55,7 @@ unsigned long lastTime = 0; //for loop timing
 double lastAngle_0 = 0;
 double lastAngle_1 = 0;
 
-Map m;
+Map m(0);
 
 int DRIVING = 1; //turns off motors when 0
 
@@ -160,6 +160,11 @@ void setup() {
     //   delay(5000);
     //   ESP.restart();
     // }
+
+  if (digitalRead(MICRO_SWITCH_2) == 0) {
+    m.setRecipes(1);
+  }
+  m.nextRecipe();
   currentInstruction = m.getNextInstruction();
   updateInstruction();
 
@@ -221,7 +226,7 @@ void loop() {
           lastAngle_1 = leftCurrentAngle;
           double distance = intendedPosition - position;
           m.setMovingDirection(sign(distance));
-          if (abs(distance) > 18 || (abs(distance) > 1 && intendedPosition == SERVING)) {
+          if (abs(distance) > 10 || (abs(distance) > 1 && intendedPosition == SERVING)) {
             //BASE_SPEED = 650 * m.getDrivingDirection();//abs(distance) > 10 ? 240 * m.getDrivingDirection() : 100 * m.getDrivingDirection();
             equalSpeedSet( BASE_SPEED * m.getDrivingDirection());
             lineSensingCorrection();
@@ -229,7 +234,7 @@ void loop() {
           } else {
             lastAngle_0 = rightCurrentAngle;
             lastAngle_1 = leftCurrentAngle;
-            brake(false);
+            brake(true);
             // equalSpeedSet(ADJUSTING_SPEED);
             // move(rightSpeedSetpoint, leftSpeedSetpoint);
             // brake(false);
@@ -316,7 +321,7 @@ void loop() {
           delay(250);
         }
         move(-1000, 1000);
-        delay(1500);
+        delay(1650);
         setVac(false);
         delay(400);
         moveToXY(44, 20);
@@ -617,9 +622,9 @@ void brake(bool useBackdrive) {
   if (useBackdrive) {
     move(0,0);
     delay(15);
-    // left.setSpeed(-leftSpeedSetpoint * DRIVING);
-    // delay(10);
-    move(-rightSpeedSetpoint, -leftSpeedSetpoint*1.1);
+    right.setSpeed(-rightSpeedSetpoint * DRIVING);
+    delay(10);
+    move(-rightSpeedSetpoint*0.95, -leftSpeedSetpoint*0.95);
     delay(10);
   }
   move(0,0);
@@ -648,10 +653,10 @@ void spin180Encoder(int dir) {
   rightSpeedSetpoint = -dir * 0.205 * MAX_SPEED;
   leftSpeedSetpoint = dir * 0.205 * 1.5 * MAX_SPEED;
   move(rightSpeedSetpoint, leftSpeedSetpoint);
-  while (blackTapeCounter < 1) {
+  while (blackTapeCounter < 2) {
     fr = analogRead(FR_TCRT);
     bl = analogRead(BL_TCRT);
-    if (fr > 3900 && bl > 3900) {
+    if (fr > 3800 && bl > 3800) {
       blackTapeCounter++;
     } else {
       blackTapeCounter = 0;
