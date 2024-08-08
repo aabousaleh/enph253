@@ -38,6 +38,7 @@ enum Instruction {
   PLACE,
   TURN,
   WAIT,
+  END_HEAT,
   END,
   SEND_CHECKPOINT,
   RECEIVE_CHECKPOINT,
@@ -46,7 +47,7 @@ enum Instruction {
 
 enum Recipe {
   BURGER,
-  DELUX_BURGER,
+  DELUXE_BURGER,
   SALAD,
   CHEESE_PLATE,
   TEST,
@@ -110,6 +111,6 @@ enum Ingredient {
 #define MICRO_SWITCH_2 8
 
 //wheel radius in inch
-#define WHEEL_RADIUS 1.275
+#define WHEEL_RADIUS 1.45
 
 #endif

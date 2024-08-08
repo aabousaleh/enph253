@@ -8,7 +8,7 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-uint8_t broadcastAddress[] = {0x64, 0xB7, 0x08, 0x9C, 0x65, 0x90};
+uint8_t broadcastAddress[] = {0x64, 0xB7, 0x08, 0x9C, 0x5B, 0xAC};
 
 esp_now_peer_info_t peerInfo;
 
@@ -43,9 +43,9 @@ AS5600 as5600_1(&Wire1);
 //Speed constants
 const int MAX_SPEED = 1000;
 int BASE_SPEED = 950;
-double STEERING_CONSTANT = 0.31;
-double TURNING_SPEED = 0.25 * MAX_SPEED;//0.15 * MAX_SPEED;
-double ADJUSTING_SPEED = 0.25 * MAX_SPEED;//0.085 * MAX_SPEED;
+double STEERING_CONSTANT = 0.45;
+double TURNING_SPEED = 0.285 * MAX_SPEED;//0.15 * MAX_SPEED;
+double ADJUSTING_SPEED = 0.245 * MAX_SPEED;//0.085 * MAX_SPEED;
 int TURNING_DELAY = 500;
 
 double dt = LOOP_INTERVAL / 1000.0; //in s
@@ -75,8 +75,8 @@ double intendedPosition;
 Instruction currentInstruction;
 Ingredient currentIngredient;
 
-const float returnY = 10.5;
-const float returnX = 14.5;
+const float returnY = 12;
+const float returnX = 16;
 
 int blackTapeCounter = 0;
 
@@ -216,17 +216,19 @@ void loop() {
           if (abs(rightDelta) > 180) rightDelta -= sign(rightDelta) * 360;
           if (abs(leftDelta) > 180) leftDelta -= sign(leftDelta) * 360;
           double deltaAngleAverage = (rightDelta + leftDelta)/2;
-          position += deltaAngleAverage/360.0 * 6.28 * WHEEL_RADIUS * m.getFacingDirection();
+          position += deltaAngleAverage * 0.02333 * m.getFacingDirection();  // /360.0 * 6.28 * WHEEL_RADIUS * m.getFacingDirection();
           lastAngle_0 = rightCurrentAngle;
           lastAngle_1 = leftCurrentAngle;
           double distance = intendedPosition - position;
           m.setMovingDirection(sign(distance));
-          if (abs(distance) > 12 || (abs(distance) > 1 && intendedPosition == SERVING)) {
+          if (abs(distance) > 18 || (abs(distance) > 1 && intendedPosition == SERVING)) {
             //BASE_SPEED = 650 * m.getDrivingDirection();//abs(distance) > 10 ? 240 * m.getDrivingDirection() : 100 * m.getDrivingDirection();
             equalSpeedSet( BASE_SPEED * m.getDrivingDirection());
             lineSensingCorrection();
             move(rightSpeedSetpoint * rightLineSensingCorrection, leftSpeedSetpoint * leftLineSensingCorrection);
           } else {
+            lastAngle_0 = rightCurrentAngle;
+            lastAngle_1 = leftCurrentAngle;
             brake(false);
             // equalSpeedSet(ADJUSTING_SPEED);
             // move(rightSpeedSetpoint, leftSpeedSetpoint);
@@ -241,7 +243,7 @@ void loop() {
       }
       case ADJUST: {
         if (intendedPosition == SERVING) {
-          position = intendedPosition;
+          position = intendedPosition - 2.5;
           brake(false);
           currentInstruction = m.getNextInstruction();
           updateInstruction();
@@ -251,15 +253,17 @@ void loop() {
           if (ls == 0) blackTapeCounter = 0;
           //equalSpeedSet(ADJUSTING_SPEED * m.getDrivingDirection());
           rightSpeedSetpoint = ADJUSTING_SPEED * m.getDrivingDirection();
-          leftSpeedSetpoint = ADJUSTING_SPEED * m.getDrivingDirection() * 1.5;
+          leftSpeedSetpoint = ADJUSTING_SPEED * m.getDrivingDirection();
           lineSensingCorrection();
           move(rightSpeedSetpoint * rightLineSensingCorrection, leftSpeedSetpoint * leftLineSensingCorrection);
-          if (blackTapeCounter >= 1) {
+          if (blackTapeCounter >= 2) {
             brake(true);
             position = intendedPosition;
             currentInstruction = m.getNextInstruction();
             updateInstruction();
             blackTapeCounter = 0;
+            lastAngle_0 = as5600_0.readAngle() / 4096.0 * 360;
+            lastAngle_1 = as5600_1.readAngle() / 4096.0 * 360;
             delay(500);
           }
         }
@@ -281,7 +285,7 @@ void loop() {
         //   // }
           place();
         } else if (currentInstruction == GRAB) {
-        //   currentIngredient = m.getNextIngredient();
+          currentIngredient = m.getNextIngredient();
         //   // if (position == PLATES) {
         //   //   if (dataReceived.occupyingPlate) break;
         //   //   dataToBeSent.occupyingPlate = true;
@@ -356,12 +360,17 @@ void updateInstruction() {
       break;
     }
     case WAIT: {
-      Serial.println("Wait");
-      DRIVING = false;
       brake(false);
-      checkpointToWaitFor = 100;
-      m.state = WAITING;
+      delay(5000);
+      currentInstruction = m.getNextInstruction();
+      updateInstruction();
       break;
+    }
+    case END_HEAT: {
+      brake(false);
+      DRIVING = false;
+      checkpointToWaitFor = 1000;
+      m.state = WAITING;
     }
     case END: {
       brake(false);
@@ -398,14 +407,14 @@ void grab(Ingredient i) {
     case plate: {
       for (int i = 0; i <= 5; i++) {
         moveToXY(20, 15.3 - i);
-        delay(25);
+        delay(30);
       }
-      delay(300);
-      for (int i = 0; i <= 18; i++) {
+      delay(350);
+      for (int i = 0; i <= 20; i++) {
         moveToXY(20 + i, 10.3);
-        delay(25);
+        delay(30);
       }
-      moveToXY(38.5, 18);
+      moveToXY(40.5, 18);
       delay(1000);
       moveToXY(25, 18);
       delay(300);
@@ -416,9 +425,9 @@ void grab(Ingredient i) {
     case lettuce:
     case cheese: {
       moveToXY(20, 17);
-      delay(550);
+      delay(250);
       moveToXY(41.5, 17);
-      delay(550);
+      delay(250);
       //turn on vacuum
         setVac(true);
       moveToXY(43.5, 10.6);
@@ -430,9 +439,9 @@ void grab(Ingredient i) {
     }
     case patty: {
       moveToXY(20, 17);
-      delay(550);
+      delay(250);
       moveToXY(41.5, 17);
-      delay(750);
+      delay(450);
       //turn on vacuum
         setVac(true);
       moveToXY(43.5, 11.6);
@@ -444,9 +453,9 @@ void grab(Ingredient i) {
     }
     case top_bun: {
       moveToXY(20, 17);
-      delay(550);
+      delay(250);
       moveToXY(38, 18);
-      delay(750);
+      delay(450);
       //turn on vacuum
         setVac(true);
       moveToXY(43.5, 13);
@@ -458,9 +467,9 @@ void grab(Ingredient i) {
     }
     case bottom_bun: {
       moveToXY(20, 17);
-      delay(550);
+      delay(250);
       moveToXY(42.5, 17);
-      delay(750);
+      delay(450);
       //turn on vacuum
         setVac(true);
       moveToXY(43.5, 11.5);
@@ -497,7 +506,7 @@ void place() {
     for (int i = 0; i < 23; i++) {
       moveToXY(20 + i, 12 + i*0.35);
       delay(50);
-      if (i == 15) {
+      if (i == 5) {
         setVac(false);
       }
     }
@@ -607,47 +616,47 @@ void move(double rss, double lss) {
 void brake(bool useBackdrive) {
   if (useBackdrive) {
     move(0,0);
-    delay(20);
+    delay(15);
     // left.setSpeed(-leftSpeedSetpoint * DRIVING);
     // delay(10);
-    move(-rightSpeedSetpoint*1.15, -leftSpeedSetpoint*1.25);
-    delay(65);
+    move(-rightSpeedSetpoint, -leftSpeedSetpoint*1.1);
+    delay(10);
   }
   move(0,0);
 }
 
 void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
-  double finalAnglePosition = 8;//12.4;
+  double finalAnglePosition = 9;//12.4;
   double currentPosition = 0;
-  if (currentIngredient == plate) {
-    TURNING_SPEED = 0.20 * MAX_SPEED;
-  } else {
-    TURNING_SPEED = 0.30 * MAX_SPEED;
-  }
+  // if (currentIngredient == plate) {
+  //   TURNING_SPEED = 0.205 * MAX_SPEED;
+  // } else {
+  //   TURNING_SPEED = 0.30 * MAX_SPEED;
+  // }
   move(dir * -TURNING_SPEED, dir * TURNING_SPEED * 1.5);
   unsigned long currentMillis = millis();
   while (finalAnglePosition - currentPosition > 0) {
     double currentAngle = as5600_1.readAngle() / 4096.0 * 360;
     double deltaA = currentAngle - lastAngle;
     if (abs(deltaA) > 180) deltaA -= sign(deltaA) * 360;
-    currentPosition += deltaA/360.0 * 6.28 * WHEEL_RADIUS * dir;
+    currentPosition += deltaA * 0.02333;///360.0 * 6.28 * WHEEL_RADIUS * dir;
     lastAngle = currentAngle;
   }
   int fr = analogRead(FR_TCRT);
   int bl = analogRead(BL_TCRT);
-  while (blackTapeCounter < 2) {
+  rightSpeedSetpoint = -dir * 0.205 * MAX_SPEED;
+  leftSpeedSetpoint = dir * 0.205 * 1.5 * MAX_SPEED;
+  move(rightSpeedSetpoint, leftSpeedSetpoint);
+  while (blackTapeCounter < 1) {
     fr = analogRead(FR_TCRT);
     bl = analogRead(BL_TCRT);
-    if (fr > 4000 && bl > 4000) {
+    if (fr > 3900 && bl > 3900) {
       blackTapeCounter++;
     } else {
       blackTapeCounter = 0;
     }
     //equalSpeedSet(dir * 0.075 * MAX_SPEED);
-    rightSpeedSetpoint = -dir * 0.19 * MAX_SPEED;
-    leftSpeedSetpoint = dir * 0.19 * 1.5 * MAX_SPEED;
-    move(rightSpeedSetpoint, leftSpeedSetpoint);
   }
   blackTapeCounter = 0;
   brake(true);

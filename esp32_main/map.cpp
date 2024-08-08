@@ -50,7 +50,7 @@ Ingredient Map::getNextIngredient() {
 }
 
 void Map::nextRecipe() {
-  Recipe nextRecipe = recipes[recipeIndex++];
+  Recipe nextRecipe = recipes1[recipeIndex++];
   instructionIndex = 0;
   locationIndex = 0;
   ingredientIndex = 0;
@@ -59,6 +59,12 @@ void Map::nextRecipe() {
       currentRecipeInstructions = burgerInstructions;
       currentRecipeLocations = burgerLocations;
       currentRecipeIngredients = burgerIngredients;
+      break;
+    }
+    case DELUXE_BURGER: {
+      currentRecipeInstructions = deluxeBurgerInstructions;
+      currentRecipeLocations = deluxeBurgerLocations;
+      currentRecipeIngredients = deluxeBurgerIngredients;
       break;
     }
     case TEST: {

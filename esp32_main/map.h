@@ -32,17 +32,23 @@ class Map{
     Instruction *currentRecipeInstructions;
     double *currentRecipeLocations;
     Ingredient *currentRecipeIngredients;
-    Recipe recipes[10] = {CHEESE_PLATE, CHEESE_PLATE, CHEESE_PLATE, CHEESE_PLATE, FLING, END_RECIPE};
+    Recipe recipes1[10] = {CHEESE_PLATE, CHEESE_PLATE, CHEESE_PLATE, CHEESE_PLATE, FLING, END_RECIPE};
+    Recipe recipes2[5] = {DELUXE_BURGER, DELUXE_BURGER, DELUXE_BURGER, DELUXE_BURGER, END_RECIPE};
 
     //FLING
     Instruction flingInstructions[8] = {GO, GRAB, SPECIAL, END};
     double flingLocations[2] = {CHEESE, SERVING};
     Ingredient flingIngredients[1] = {cheese};
 
-    //Burger, robot 1
-    Instruction burgerInstructions[30] = {GO, GRAB, TURN, GO, RECEIVE_CHECKPOINT, PLACE, TURN, GRAB, TURN, PLACE, GO, GRAB, GO, PLACE, SEND_CHECKPOINT, RECEIVE_CHECKPOINT, GRAB, TURN, GO, END};
-    double burgerLocations[7] = {CHEESE, PLATES, COOKTOP, PLATES, SERVING};
-    Ingredient burgerIngredients[5] = {cheese, lettuce, patty, plate};
+    //Deluxe cheese burger, robot 1
+    Instruction deluxeBurgerInstructions[30] = {GO, GRAB, TURN, GO, RECEIVE_CHECKPOINT, PLACE, TURN, GRAB, TURN, PLACE, GO, GRAB, GO, PLACE, SEND_CHECKPOINT, RECEIVE_CHECKPOINT, GRAB, TURN, GO, END};
+    double deluxeBurgerLocations[7] = {CHEESE, PLATES, COOKTOP, PLATES, SERVING};
+    Ingredient deluxeBurgerIngredients[5] = {cheese, lettuce, patty, plate};
+
+    //burger robot 1
+    Instruction burgerInstructions[20] = {GO, RECEIVE_CHECKPOINT, WAIT, GRAB, GO, RECEIVE_CHECKPOINT, PLACE, RECEIVE_CHECKPOINT, GRAB, TURN, GO, PLACE};
+    double burgerLocations[3] = {COOKTOP, PLATES, SERVING};
+    Ingredient burgerIngredients[2] = {patty, plate};
 
     //burger, robot 0
     // Instruction burgerInstructions[22] = {GO, GRAB, TURN, GO, PLACE, SEND_CHECKPOINT, TURN, GO, GRAB, TURN, GO, PLACE, GO, GRAB, GO, PLACE, TURN, GO, GRAB, TURN, GO, RECEIVE_CHECKPOINT, PLACE, SEND_CHECKPOINT, RECEIVE_CHECKPOINT, END};
@@ -61,7 +67,7 @@ class Map{
 
     //cheese, robot 1
     Instruction cheeseInstructions[15] = {GO, GRAB, TURN, GO, PLACE, GRAB, TURN, GO, PLACE, END};
-    double cheeseLocations[5] = {CHEESE, POTATOES, SERVING};
+    double cheeseLocations[5] = {CHEESE, PLATES, SERVING};
     Ingredient cheeseIngredients[2] = {cheese, plate};
 
     //Test
@@ -69,7 +75,7 @@ class Map{
     double testLocations[2] = {PLATES, COOKTOP};//{SERVING, CHEESE};
     Ingredient testIngredients[10] = {cheese};//{bottom_bun, patty, tomato, cheese, lettuce, top_bun};
 
-    Instruction endInstructions[1] = {WAIT};
+    Instruction endInstructions[1] = {END_HEAT};
 
 };
 #endif
