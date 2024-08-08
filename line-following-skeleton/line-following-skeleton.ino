@@ -69,10 +69,10 @@ void loop() {
   // ledcWrite(PWM_LEFT_2, 0);
   // delay(5000);
   // if (timeStart < 4500) {
-  //   int rightSpeed = 350; //1000 max
-  //   int leftSpeed = 350;
-  //   int correction = 80;
-    //line sensing:
+  //   int rightSpeed = 950; //1000 max
+  //   int leftSpeed = 950;
+  //   int correction = 0.30 * rightSpeed;
+    
     double fr = analogRead(FR_TCRT);
     double fl = analogRead(FL_TCRT);
     double br = analogRead(BR_TCRT);
@@ -119,8 +119,8 @@ void loop() {
   Serial.print(rs);
   Serial.print(",");
   Serial.print("LeftStation:");
-  Serial.println(ls);
-  // // Serial.print(",");
-  // // Serial.print("pot:");
-  // // Serial.println(pot);
+  Serial.print(ls);
+  Serial.print(",");
+  Serial.print("pot:");
+  Serial.println(pot);
 }

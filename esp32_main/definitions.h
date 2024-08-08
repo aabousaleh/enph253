@@ -65,7 +65,7 @@ enum Ingredient {
   plate
 };
 
-#define LOOP_INTERVAL 10 //in millis
+#define LOOP_INTERVAL 2 //in millis
 
 //right motor pwm pins
 #define PWM_RIGHT_1 26
@@ -110,6 +110,6 @@ enum Ingredient {
 #define MICRO_SWITCH_2 8
 
 //wheel radius in inch
-#define WHEEL_RADIUS 1.265
+#define WHEEL_RADIUS 1.275
 
 #endif

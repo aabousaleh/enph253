@@ -43,9 +43,9 @@ AS5600 as5600_1(&Wire1);
 //Speed constants
 const int MAX_SPEED = 1000;
 int BASE_SPEED = 950;
-double STEERING_CONSTANT = 0.405;
-double TURNING_SPEED = 0.15 * MAX_SPEED;
-double ADJUSTING_SPEED = 0.085 * MAX_SPEED;
+double STEERING_CONSTANT = 0.31;
+double TURNING_SPEED = 0.25 * MAX_SPEED;//0.15 * MAX_SPEED;
+double ADJUSTING_SPEED = 0.25 * MAX_SPEED;//0.085 * MAX_SPEED;
 int TURNING_DELAY = 500;
 
 double dt = LOOP_INTERVAL / 1000.0; //in s
@@ -221,13 +221,13 @@ void loop() {
           lastAngle_1 = leftCurrentAngle;
           double distance = intendedPosition - position;
           m.setMovingDirection(sign(distance));
-          if (abs(distance) > 10 || (abs(distance) > 0.5 && intendedPosition == SERVING)) {
+          if (abs(distance) > 12 || (abs(distance) > 1 && intendedPosition == SERVING)) {
             //BASE_SPEED = 650 * m.getDrivingDirection();//abs(distance) > 10 ? 240 * m.getDrivingDirection() : 100 * m.getDrivingDirection();
             equalSpeedSet( BASE_SPEED * m.getDrivingDirection());
             lineSensingCorrection();
             move(rightSpeedSetpoint * rightLineSensingCorrection, leftSpeedSetpoint * leftLineSensingCorrection);
           } else {
-            //brake(true);
+            brake(false);
             // equalSpeedSet(ADJUSTING_SPEED);
             // move(rightSpeedSetpoint, leftSpeedSetpoint);
             // brake(false);
@@ -242,23 +242,25 @@ void loop() {
       case ADJUST: {
         if (intendedPosition == SERVING) {
           position = intendedPosition;
-          brake(true);
+          brake(false);
           currentInstruction = m.getNextInstruction();
           updateInstruction();
         } else {
           int ls = digitalRead(LS_TCRT);
           if (ls == 1) blackTapeCounter++;
           if (ls == 0) blackTapeCounter = 0;
-          equalSpeedSet(ADJUSTING_SPEED * m.getDrivingDirection());
+          //equalSpeedSet(ADJUSTING_SPEED * m.getDrivingDirection());
+          rightSpeedSetpoint = ADJUSTING_SPEED * m.getDrivingDirection();
+          leftSpeedSetpoint = ADJUSTING_SPEED * m.getDrivingDirection() * 1.5;
           lineSensingCorrection();
-          move(rightSpeedSetpoint * rightLineSensingCorrection, leftSpeedSetpoint * leftLineSensingCorrection * 1.5);
-          if (blackTapeCounter >= 2) {
+          move(rightSpeedSetpoint * rightLineSensingCorrection, leftSpeedSetpoint * leftLineSensingCorrection);
+          if (blackTapeCounter >= 1) {
             brake(true);
             position = intendedPosition;
             currentInstruction = m.getNextInstruction();
             updateInstruction();
             blackTapeCounter = 0;
-            delay(250);
+            delay(500);
           }
         }
         break;
@@ -271,22 +273,22 @@ void loop() {
       }
       case ARM: {
         //if (stationRightOrLeft(position) != m.getFacingDirection()) spin180Encoder(1);
-        // if (currentInstruction == PLACE) {
+        if (currentInstruction == PLACE) {
         //   // if (position == PLATES) {
         //   //   if (dataReceived.occupyingPlate) break;
         //   //   dataToBeSent.occupyingPlate = true;
         //   //   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
         //   // }
-        //   place();
-        // } else if (currentInstruction == GRAB) {
+          place();
+        } else if (currentInstruction == GRAB) {
         //   currentIngredient = m.getNextIngredient();
         //   // if (position == PLATES) {
         //   //   if (dataReceived.occupyingPlate) break;
         //   //   dataToBeSent.occupyingPlate = true;
         //   //   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
         //   // }
-        //   grab(currentIngredient);
-        // }
+          grab(currentIngredient);
+        }
         // dataToBeSent.occupyingPlate = false;
         // esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &dataToBeSent, sizeof(dataToBeSent));
         //send status to other robot
@@ -551,7 +553,7 @@ void lineSensingCorrection() {
   //1 means right, -1 means left, 0 means straight
   if (BASE_SPEED != 0) {
     if (m.getDrivingDirection() == 1) {
-      if (fr < 4000 && fl < 4000) OFF_THE_LINE = true;
+      if (fr < 4050 && fl < 4050) OFF_THE_LINE = true;
       if (front_correction > 0 || (OFF_THE_LINE && (LAST_TURN == 1))) {
         rightLineSensingCorrection = (1.0 - (STEERING_CONSTANT));
         leftLineSensingCorrection = 1;
@@ -605,25 +607,25 @@ void move(double rss, double lss) {
 void brake(bool useBackdrive) {
   if (useBackdrive) {
     move(0,0);
-    delay(15);
-    left.setSpeed(-leftSpeedSetpoint * DRIVING);
-    delay(10);
-    move(-rightSpeedSetpoint/1.5, -leftSpeedSetpoint/1.5);
     delay(20);
+    // left.setSpeed(-leftSpeedSetpoint * DRIVING);
+    // delay(10);
+    move(-rightSpeedSetpoint*1.15, -leftSpeedSetpoint*1.25);
+    delay(65);
   }
   move(0,0);
 }
 
 void spin180Encoder(int dir) {
   double lastAngle = as5600_1.readAngle() / 4096.0 * 360;
-  double finalAnglePosition = 6.5;//12.4;
+  double finalAnglePosition = 8;//12.4;
   double currentPosition = 0;
   if (currentIngredient == plate) {
-    TURNING_SPEED = 0.085 * MAX_SPEED;
+    TURNING_SPEED = 0.20 * MAX_SPEED;
   } else {
-    TURNING_SPEED = 0.15 * MAX_SPEED;
+    TURNING_SPEED = 0.30 * MAX_SPEED;
   }
-  move(dir * -TURNING_SPEED, dir * TURNING_SPEED * 1.15);
+  move(dir * -TURNING_SPEED, dir * TURNING_SPEED * 1.5);
   unsigned long currentMillis = millis();
   while (finalAnglePosition - currentPosition > 0) {
     double currentAngle = as5600_1.readAngle() / 4096.0 * 360;
@@ -634,14 +636,20 @@ void spin180Encoder(int dir) {
   }
   int fr = analogRead(FR_TCRT);
   int bl = analogRead(BL_TCRT);
-  while (fr < 4050 || bl < 4050) {
+  while (blackTapeCounter < 2) {
     fr = analogRead(FR_TCRT);
     bl = analogRead(BL_TCRT);
-    equalSpeedSet(dir * 0.075 * MAX_SPEED);
-    rightSpeedSetpoint = -dir * 0.075 * MAX_SPEED;
-    leftSpeedSetpoint = dir * 0.075 * 1.5 * MAX_SPEED;
+    if (fr > 4000 && bl > 4000) {
+      blackTapeCounter++;
+    } else {
+      blackTapeCounter = 0;
+    }
+    //equalSpeedSet(dir * 0.075 * MAX_SPEED);
+    rightSpeedSetpoint = -dir * 0.19 * MAX_SPEED;
+    leftSpeedSetpoint = dir * 0.19 * 1.5 * MAX_SPEED;
     move(rightSpeedSetpoint, leftSpeedSetpoint);
   }
+  blackTapeCounter = 0;
   brake(true);
   delay(750);
   m.flipFacingDirection();
