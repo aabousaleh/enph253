@@ -42,8 +42,8 @@ AS5600 as5600_1(&Wire1);
 
 //Speed constants
 const int MAX_SPEED = 1000;
-int BASE_SPEED = 800;
-double STEERING_CONSTANT = 0.35;
+int BASE_SPEED = 750;
+double STEERING_CONSTANT = 0.30;
 double TURNING_SPEED = 0.285 * MAX_SPEED;//0.15 * MAX_SPEED;
 double ADJUSTING_SPEED = 0.245 * MAX_SPEED;//0.085 * MAX_SPEED;
 int TURNING_DELAY = 500;
@@ -75,7 +75,7 @@ double intendedPosition;
 Instruction currentInstruction;
 Ingredient currentIngredient;
 
-const float returnY = 12;
+const float returnY = 12.5;
 const float returnX = 16;
 
 int blackTapeCounter = 0;
@@ -261,7 +261,7 @@ void loop() {
           leftSpeedSetpoint = ADJUSTING_SPEED * m.getDrivingDirection();
           lineSensingCorrection();
           move(rightSpeedSetpoint * rightLineSensingCorrection, leftSpeedSetpoint * leftLineSensingCorrection);
-          if (blackTapeCounter >= 2) {
+          if (blackTapeCounter >= 1) {
             brake(true);
             position = intendedPosition;
             currentInstruction = m.getNextInstruction();
@@ -416,10 +416,10 @@ void grab(Ingredient i) {
       }
       delay(350);
       for (int i = 0; i <= 20; i++) {
-        moveToXY(20 + i, 10.3);
-        delay(30);
+        moveToXY(20 + i, 10.1);
+        delay(45);
       }
-      moveToXY(40.5, 18);
+      moveToXY(40, 18);
       delay(1000);
       moveToXY(25, 18);
       delay(300);
@@ -509,13 +509,15 @@ void place() {
     moveToXY(returnX, returnY);
   } else {
     for (int i = 0; i < 23; i++) {
-      moveToXY(20 + i, 12 + i*0.35);
+      moveToXY(20 + i*0.5, 12 + i*0.35);
       delay(50);
-      if (i == 5) {
+      if (i == 15) {
         setVac(false);
       }
     }
-    moveToXY(44.5, 17.5);
+    moveToXY(37, 18.5);
+    delay(400);
+    moveToXY(42.5, 17.5);
     delay(300);
     moveToXY(44.5, 16.5);
     delay(1500);
@@ -653,7 +655,7 @@ void spin180Encoder(int dir) {
   rightSpeedSetpoint = -dir * 0.205 * MAX_SPEED;
   leftSpeedSetpoint = dir * 0.205 * 1.5 * MAX_SPEED;
   move(rightSpeedSetpoint, leftSpeedSetpoint);
-  while (blackTapeCounter < 2) {
+  while (blackTapeCounter < 1) {
     fr = analogRead(FR_TCRT);
     bl = analogRead(BL_TCRT);
     if (fr > 3800 && bl > 3800) {
